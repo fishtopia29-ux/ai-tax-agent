@@ -760,7 +760,8 @@ function rebuildExtracted() {
 
 function updateVaultSummary() {
   const done = docs.filter(d=>d.status==='done'&&d.extracted&&!d.extracted.error);
-  const sum = f => done.reduce((a,d)=>a+(parseFloat(d.extracted[f])||0),0);
+  const parseVal = v => parseFloat(String(v||'').replace(/[$,]/g,'')) || 0;
+  const sum = f => done.reduce((a,d)=>a+parseVal(d.extracted[f]),0);
   const fmt = v => v ? '$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
   document.getElementById('vSum-income').textContent = fmt(sum('income'));
   document.getElementById('vSum-withheld').textContent = fmt(sum('taxWithheld'));
