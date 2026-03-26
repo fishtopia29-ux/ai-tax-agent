@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AusTax Agent — Accountant Edition</title>
+<style>
+:root {
+  --bg:#f7f6f2; --surface:#ffffff; --surface2:#f0efe9; --surface3:#e8e7e0;
+  --border:rgba(0,0,0,0.09); --border-strong:rgba(0,0,0,0.16);
+  --text:#1a1a18; --muted:#6b6b66; --hint:#9b9b96;
+  --accent:#0f6e56; --accent-l:#e1f5ee; --accent-t:#085041; --accent-mid:#1d9e75;
+  --warn:#ba7517; --warn-l:#faeeda; --warn-t:#854f0b;
+  --danger:#993c1d; --danger-l:#faece7;
+  --info:#185fa5; --info-l:#e6f1fb; --info-t:#0c447c;
+  --invest:#534ab7; --invest-l:#eeedfe; --invest-t:#3c3489;
+  --r:8px; --rs:5px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a; --surface:#242422; --surface2:#2c2c29; --surface3:#343430;
+    --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.15);
+    --text:#f0efe9; --muted:#9b9b96; --hint:#5a5a56;
+    --accent:#1d9e75; --accent-l:#04342c; --accent-t:#9fe1cb; --accent-mid:#5dcaa5;
+    --warn:#ef9f27; --warn-l:#412402; --warn-t:#fac775;
+    --danger:#d85a30; --danger-l:#4a1b0c;
+    --info:#378add; --info-l:#042c53; --info-t:#b5d4f4;
+    --invest:#7f77dd; --invest-l:#26215c; --invest-t:#cecbf6;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;font-size:14px;line-height:1.6;}
+
+/* ── Shell ── */
+.shell{display:flex;height:100vh;}
+.sidebar{width:232px;min-width:232px;background:var(--surface);border-right:0.5px solid var(--border-strong);display:flex;flex-direction:column;overflow:hidden;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* ── Sidebar ── */
+.logo{padding:16px 16px 12px;border-bottom:0.5px solid var(--border);}
+.logo-name{font-size:17px;font-weight:600;letter-spacing:-0.4px;}
+.logo-edition{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);letter-spacing:.8px;margin-top:1px;}
+.logo-fy{display:inline-block;margin-top:5px;font-size:10px;font-family:'Courier New',monospace;background:var(--accent-l);color:var(--accent-t);padding:2px 7px;border-radius:3px;}
+
+.sb-section{padding:10px 14px 4px;font-size:10px;font-family:'Courier New',monospace;color:var(--hint);letter-spacing:.9px;text-transform:uppercase;}
+
+/* API key */
+.api-wrap{margin:8px 10px;padding:9px 11px;background:var(--warn-l);border:0.5px solid var(--warn);border-radius:var(--rs);font-size:11px;color:var(--warn-t);}
+.api-wrap input{width:100%;margin-top:5px;padding:5px 7px;font-size:11px;font-family:'Courier New',monospace;background:var(--surface);border:0.5px solid var(--border-strong);border-radius:4px;color:var(--text);outline:none;}
+.api-wrap input:focus{border-color:var(--accent);}
+.api-ok{margin:8px 10px;padding:9px 11px;background:var(--accent-l);border:0.5px solid var(--accent);border-radius:var(--rs);font-size:11px;color:var(--accent-t);display:none;}
+
+/* PII guard */
+.pii-pill{margin:6px 10px;padding:5px 10px;background:var(--accent-l);color:var(--accent-t);border-radius:20px;font-size:11px;font-family:'Courier New',monospace;text-align:center;}
+
+/* Income toggles */
+.income-toggle{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;font-size:12px;color:var(--muted);transition:background .12s;}
+.income-toggle:hover{background:var(--surface2);}
+.income-toggle.on{color:var(--text);}
+.toggle-box{width:14px;height:14px;border:0.5px solid var(--border-strong);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.income-toggle.on .toggle-box{background:var(--accent);border-color:var(--accent);color:white;}
+.income-code{margin-left:auto;font-size:10px;font-family:'Courier New',monospace;color:var(--hint);}
+
+/* Nav items */
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:12px;color:var(--muted);cursor:pointer;transition:background .12s;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-l);color:var(--accent-t);font-weight:500;border-left:2px solid var(--accent);padding-left:12px;}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--border-strong);flex-shrink:0;}
+.nav-dot.on{background:var(--accent);}
+.nav-dot.warn{background:var(--warn);}
+
+/* Running summary */
+.summary-block{padding:8px 14px;flex:1;overflow-y:auto;}
+.sum-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;border-bottom:0.5px solid var(--border);}
+.sum-row:last-child{border:none;}
+.sum-label{color:var(--muted);}
+.sum-val{font-family:'Courier New',monospace;font-weight:600;}
+.sum-val.pos{color:var(--accent);}
+.sum-val.neg{color:var(--danger);}
+.sum-placeholder{font-size:11px;color:var(--hint);font-style:italic;padding:4px 0;}
+
+/* Risks */
+.risk-item{padding:4px 14px;font-size:11px;color:var(--warn-t);display:flex;gap:6px;}
+.risk-item::before{content:'⚑';font-size:10px;}
+
+/* Export btn */
+.export-btn{margin:8px 10px;padding:6px 10px;font-size:11px;font-family:'Courier New',monospace;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--rs);cursor:pointer;color:var(--muted);text-align:center;transition:background .12s;}
+.export-btn:hover{background:var(--surface3);color:var(--text);}
+
+/* ── Main topbar ── */
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);padding:11px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.topbar-title{font-size:14px;font-weight:600;flex:1;}
+.client-pill{padding:4px 10px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:20px;font-size:11px;color:var(--muted);cursor:pointer;transition:background .12s;}
+.client-pill:hover{background:var(--surface3);}
+.tbtn{padding:5px 12px;font-size:12px;border-radius:var(--rs);border:0.5px solid var(--border-strong);background:var(--surface);color:var(--text);cursor:pointer;transition:background .12s;font-family:inherit;}
+.tbtn:hover{background:var(--surface2);}
+.tbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.tbtn.primary:hover{opacity:.88;}
+.tbtn:disabled{opacity:.38;cursor:not-allowed;}
+
+/* ── Panels ── */
+.panel{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.panel.hidden{display:none;}
+
+/* ── Interview panel ── */
+.chat-wrap{flex:1;overflow-y:auto;padding:16px 20px;}
+.starter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.starter-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:13px;cursor:pointer;transition:border-color .15s,background .15s;}
+.starter-card:hover{border-color:var(--accent);background:var(--accent-l);}
+.starter-icon{font-size:20px;margin-bottom:6px;}
+.starter-title{font-size:12px;font-weight:600;margin-bottom:2px;}
+.starter-sub{font-size:11px;color:var(--muted);}
+.empty-state{padding:20px 0;text-align:center;color:var(--hint);font-size:13px;}
+
+.msg{margin-bottom:14px;}
+.msg-role{font-size:10px;font-family:'Courier New',monospace;color:var(--hint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;}
+.msg-body{padding:10px 14px;border-radius:var(--rs);font-size:13px;line-height:1.7;white-space:pre-wrap;border:0.5px solid var(--border);}
+.msg-body.user{background:var(--surface2);}
+.msg-body.assistant{background:var(--accent-l);border-color:var(--accent-mid);}
+.msg-body.loading{color:var(--muted);font-style:italic;}
+
+.quick-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px 10px;}
+.chip{padding:5px 11px;font-size:11px;background:var(--surface);border:0.5px solid var(--border-strong);border-radius:20px;cursor:pointer;color:var(--muted);transition:background .12s;}
+.chip:hover{background:var(--accent-l);color:var(--accent-t);border-color:var(--accent);}
+
+.chat-input-row{display:flex;gap:8px;padding:12px 20px;border-top:0.5px solid var(--border);background:var(--surface);flex-shrink:0;}
+.chat-input{flex:1;padding:9px 13px;font-size:13px;border:0.5px solid var(--border-strong);border-radius:var(--rs);background:var(--bg);color:var(--text);font-family:inherit;outline:none;resize:none;min-height:38px;max-height:110px;line-height:1.5;}
+.chat-input:focus{border-color:var(--accent);}
+
+/* ── Vault panel ── */
+.vault-wrap{flex:1;overflow-y:auto;padding:20px 24px;}
+.notice{padding:9px 13px;border-radius:var(--rs);font-size:12px;display:flex;gap:8px;margin-bottom:14px;line-height:1.5;}
+.notice.warn{background:var(--warn-l);color:var(--warn-t);border:0.5px solid var(--warn);}
+.notice.info{background:var(--info-l);color:var(--info-t);border:0.5px solid var(--info);}
+
+.upload-zone{border:1.5px dashed var(--border-strong);border-radius:var(--r);padding:26px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:20px;background:var(--surface);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-l);}
+.upload-zone input{display:none;}
+.uz-icon{font-size:22px;margin-bottom:8px;}
+.uz-title{font-size:13px;font-weight:500;margin-bottom:3px;}
+.uz-sub{font-size:11px;color:var(--muted);}
+
+.doc-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-bottom:22px;}
+.dtype-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);padding:11px;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+.dtype-card:hover{border-color:var(--accent);background:var(--accent-l);}
+.dtype-card.sel{border-color:var(--accent);background:var(--accent-l);}
+.dtype-card.sel::after{content:'✓';position:absolute;top:7px;right:9px;font-size:10px;color:var(--accent);}
+.dtype-icon{font-size:17px;margin-bottom:5px;display:block;}
+.dtype-name{font-size:12px;font-weight:500;margin-bottom:1px;}
+.dtype-desc{font-size:10px;color:var(--muted);line-height:1.4;}
+
+.vault-section-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.vault-section-title{font-size:12px;font-weight:600;letter-spacing:.1px;}
+
+.doc-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rs);margin-bottom:5px;}
+.doc-item-icon{width:28px;height:28px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.doc-item-info{flex:1;min-width:0;}
+.doc-item-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.doc-item-meta{font-size:10px;color:var(--muted);margin-top:1px;}
+.doc-status{font-size:10px;padding:2px 7px;border-radius:20px;font-family:'Courier New',monospace;flex-shrink:0;}
+.doc-status.pending{background:var(--warn-l);color:var(--warn);}
+.doc-status.processing{background:var(--info-l);color:var(--info);}
+.doc-status.done{background:var(--accent-l);color:var(--accent-t);}
+.doc-status.error{background:var(--danger-l);color:var(--danger);}
+.doc-remove{font-size:14px;color:var(--hint);cursor:pointer;padding:2px 4px;border-radius:3px;}
+.doc-remove:hover{color:var(--danger);}
+.type-sel{font-size:10px;padding:2px 5px;border:0.5px solid var(--border-strong);border-radius:3px;background:var(--surface);color:var(--text);font-family:inherit;}
+
+.ext-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;}
+.ext-hdr{padding:10px 14px;background:var(--surface2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;}
+.ext-body{padding:12px 14px;}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;}
+.f-label{font-size:9px;font-family:'Courier New',monospace;color:var(--hint);text-transform:uppercase;letter-spacing:.4px;}
+.f-val{font-size:12px;color:var(--text);margin-top:1px;}
+.ext-notes{margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);font-size:11px;color:var(--muted);}
+
+/* spinner */
+.spin{display:inline-block;width:11px;height:11px;border:1.5px solid var(--border-strong);border-top-color:var(--accent);border-radius:50%;animation:sp .65s linear infinite;vertical-align:middle;margin-right:3px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ════════════ SIDEBAR ════════════ -->
+<div class="sidebar">
+
+  <div class="logo">
+    <div class="logo-name">⚖ AusTax Agent</div>
+    <div class="logo-edition">ACCOUNTANT EDITION</div>
+    <span class="logo-fy">FY 2024–25</span>
+  </div>
+
+  <!-- API Key -->
+  <div class="api-wrap" id="apiWrap">
+    <div>🔑 Anthropic API Key</div>
+    <div style="font-size:10px;margin-top:2px;opacity:.8;">Never stored or transmitted — browser only</div>
+    <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" oninput="onApiKey()" />
+  </div>
+  <div class="api-ok" id="apiOk">🔑 API key set</div>
+
+  <div class="pii-pill" id="piiPill">🛡 PII Guard Active</div>
+
+  <!-- Income types -->
+  <div class="sb-section">Active income types</div>
+  <div class="income-toggle on" data-type="payg" onclick="toggleIncome(this)">
+    <div class="toggle-box">✓</div>
+    <span>PAYG / Salary</span>
+    <span class="income-code">s.6-5</span>
+  </div>
+  <div class="income-toggle" data-type="abn" onclick="toggleIncome(this)">
+    <div class="toggle-box"></div>
+    <span>Sole trader / ABN</span>
+    <span class="income-code">Sch 1</span>
+  </div>
+  <div class="income-toggle" data-type="rental" onclick="toggleIncome(this)">
+    <div class="toggle-box"></div>
+    <span>Rental income</span>
+    <span class="income-code">s.25-10</span>
+  </div>
+  <div class="income-toggle" data-type="cgt" onclick="toggleIncome(this)">
+    <div class="toggle-box"></div>
+    <span>Investments / CGT</span>
+    <span class="income-code">Div 102</span>
+  </div>
+
+  <!-- Navigation -->
+  <div class="sb-section" style="margin-top:4px;">Panels</div>
+  <div class="nav-item active" id="nav-interview" onclick="switchPanel('interview')">
+    <span class="nav-dot on"></span> Client Tax Interview
+  </div>
+  <div class="nav-item" id="nav-vault" onclick="switchPanel('vault')">
+    <span class="nav-dot" id="vaultDot"></span> Document Vault
+  </div>
+  <div class="nav-item" id="nav-drafter" onclick="switchPanel('drafter')">
+    <span class="nav-dot" id="drafterDot"></span> Return Drafter
+  </div>
+
+  <!-- Running summary -->
+  <div class="sb-section" style="margin-top:4px;">Running summary</div>
+  <div class="summary-block">
+    <div id="summaryContent">
+      <div class="sum-placeholder">Start a conversation to populate the summary</div>
+    </div>
+  </div>
+
+  <!-- Flagged risks -->
+  <div class="sb-section">Flagged risks</div>
+  <div id="risksContent" style="padding-bottom:6px;">
+    <!-- populated dynamically -->
+  </div>
+
+  <!-- Vault summary -->
+  <div id="vaultSummaryWrap" style="display:none;">
+    <div class="sb-section">Vault totals</div>
+    <div style="padding:0 10px 6px;">
+      <div class="sum-row"><span class="sum-label">Gross income</span><span class="sum-val pos" id="vSum-income">—</span></div>
+      <div class="sum-row"><span class="sum-label">Tax withheld</span><span class="sum-val" id="vSum-withheld">—</span></div>
+      <div class="sum-row"><span class="sum-label">Deductions</span><span class="sum-val neg" id="vSum-deductions">—</span></div>
+      <div class="sum-row"><span class="sum-label">Rental income</span><span class="sum-val pos" id="vSum-rental">—</span></div>
+      <div class="sum-row"><span class="sum-label">Rental expenses</span><span class="sum-val neg" id="vSum-rentalExp">—</span></div>
+      <div class="sum-row"><span class="sum-label">Capital gains</span><span class="sum-val" id="vSum-cgt">—</span></div>
+    </div>
+  </div>
+
+  <div class="export-btn" onclick="exportNotes()">↓ Export accountant notes</div>
+
+</div><!-- /sidebar -->
+
+<!-- ════════════ MAIN ════════════ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title" id="topTitle">Client Tax Interview</div>
+    <span class="client-pill" id="clientPill" onclick="newClient()">No client session active — toggle income types and begin</span>
+    <button class="tbtn" onclick="newClient()">+ New client</button>
+    <button class="tbtn primary" id="processVaultBtn" onclick="processAllDocs()" style="display:none;" disabled>Extract documents</button>
+    <button class="tbtn primary" id="draftReturnBtn" onclick="switchPanel('drafter')" style="display:none;" disabled>Draft return →</button>
+  </div>
+
+  <!-- ══ INTERVIEW PANEL ══ -->
+  <div class="panel" id="panel-interview">
+    <div class="chat-wrap" id="chatWrap">
+      <div style="text-align:center;padding:10px 0 4px;">
+        <div style="font-size:22px;margin-bottom:6px;">📋</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;">Start a tax interview</div>
+        <div style="font-size:12px;color:var(--muted);">Select income types on the left, enter your API key, then choose a starting point below or type your own question.</div>
+      </div>
+      <div class="starter-grid">
+        <div class="starter-card" onclick="startWith('Full return interview — PAYG, ABN, and investments. Ask me about all income sources, deductions, and offsets for FY2024-25.')">
+          <div class="starter-icon">🧾</div>
+          <div class="starter-title">Full return interview</div>
+          <div class="starter-sub">PAYG + ABN + investments</div>
+        </div>
+        <div class="starter-card" onclick="startWith('I am a healthcare worker. Interview me about WFH expenses, vehicle use, uniform and laundry, and self-education for my FY2024-25 return.')">
+          <div class="starter-icon">🏥</div>
+          <div class="starter-title">Healthcare worker</div>
+          <div class="starter-sub">WFH + vehicle + uniform</div>
+        </div>
+        <div class="starter-card" onclick="startWith('I own a rental property. Walk me through rental income, negative gearing, depreciation schedule, and deductible expenses for FY2024-25.')">
+          <div class="starter-icon">🏠</div>
+          <div class="starter-title">Rental property owner</div>
+          <div class="starter-sub">Neg gearing + depreciation</div>
+        </div>
+        <div class="starter-card" onclick="startWith('I have CGT events to review — shares, crypto, and possibly the 50% discount. Walk me through each event for FY2024-25.')">
+          <div class="starter-icon">📈</div>
+          <div class="starter-title">CGT event review</div>
+          <div class="starter-sub">Shares, crypto, discount</div>
+        </div>
+      </div>
+    </div>
+    <div class="notice warn" style="margin:0 20px 0;border-radius:var(--rs);">
+      <span>⚠</span>
+      <span>Do not enter identifying client information (TFN, full name, DOB, address, ABN, bank details). The PII scrubber will block common patterns, but please use anonymised descriptions (e.g. "my client").</span>
+    </div>
+    <div class="quick-chips" style="padding-top:10px;">
+      <span class="chip" onclick="startWith('Compare the fixed rate and actual cost WFH methods for my client.')">WFH method comparison</span>
+      <span class="chip" onclick="startWith('Help me work out vehicle deduction — logbook vs cents per km for my client.')">Vehicle records</span>
+      <span class="chip" onclick="startWith('Explain instant asset write-off eligibility for a sole trader for FY2024-25.')">Instant asset write-off</span>
+      <span class="chip" onclick="startWith('What self-education expenses can my client deduct?')">Self-education</span>
+      <span class="chip" onclick="startWith('Explain the home office CGT risk if my client claims a home office deduction.')">Home office CGT risk</span>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" placeholder="Ask anything about the return…" rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="tbtn primary" onclick="sendChat()">Send →</button>
+    </div>
+  </div>
+
+  <!-- ══ VAULT PANEL ══ -->
+  <div class="panel hidden" id="panel-vault">
+    <div class="vault-wrap">
+
+      <div class="notice warn">
+        <span>⚠</span>
+        <span>Do not upload documents containing TFN, full name, or bank account numbers. Use anonymised or redacted copies only.</span>
+      </div>
+      <div class="notice info">
+        <span>ℹ</span>
+        <span>Upload PDFs or images. Claude will extract all ATO-relevant figures automatically — income, deductions, rental figures, CGT, and more.</span>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+           ondragover="dragOver(event)" ondrop="doDrop(event)" ondragleave="dragLeave()">
+        <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg" onchange="addFiles(this.files)"/>
+        <div class="uz-icon">⬆</div>
+        <div class="uz-title">Drop files here or click to upload</div>
+        <div class="uz-sub">PDF, PNG, JPG — PAYG summaries, receipts, rental statements, brokerage reports</div>
+      </div>
+
+      <!-- Doc type tags -->
+      <div class="vault-section-hdr" style="margin-bottom:10px;">
+        <div class="vault-section-title">Document types in this return</div>
+      </div>
+      <div class="doc-types" id="docTypeGrid"></div>
+
+      <!-- Uploaded files -->
+      <div id="docListWrap" style="display:none;">
+        <div class="vault-section-hdr">
+          <div class="vault-section-title">Uploaded documents (<span id="docCount">0</span>)</div>
+        </div>
+        <div id="docList"></div>
+        <div style="height:12px;"></div>
+      </div>
+
+      <!-- Extracted data -->
+      <div id="extractedWrap" style="display:none;">
+        <div class="vault-section-hdr"><div class="vault-section-title">Extracted data</div></div>
+        <div id="extractedCards"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ DRAFTER PANEL ══ -->
+  <div class="panel hidden" id="panel-drafter">
+    <div class="chat-wrap" id="drafterWrap">
+      <div class="msg">
+        <div class="msg-role">System</div>
+        <div class="msg-body assistant">Document vault loaded. Ask me to draft a return, estimate your refund, identify deductions, or explain any item — e.g. <em>"Draft a complete FY2024-25 tax return based on my documents"</em>.</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="drafterInput" placeholder="Draft my FY2024-25 tax return based on these documents…" rows="1" onkeydown="handleDrafterKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="tbtn primary" id="drafterSend" onclick="sendDrafter()">Send →</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let apiKey = '';
+let activeIncomeTypes = new Set(['payg']);
+let chatMessages = [];   // {role, content}
+let drafterMessages = []; // {role, content}
+let docs = [];
+let docIdSeq = 0;
+let clientActive = false;
+
+const DOC_TYPES = [
+  {id:'payg',   icon:'🧾', name:'PAYG Summary',      desc:'Employer payment summary / income statement', bg:'#e1f5ee'},
+  {id:'receipt',icon:'📋', name:'Deduction receipts', desc:'Work expenses, tools, uniform, WFH',          bg:'#e6f1fb'},
+  {id:'rental', icon:'🏠', name:'Rental property',    desc:'Income & expense statements, agent reports',  bg:'#faeeda'},
+  {id:'invest', icon:'📈', name:'Investment / CGT',   desc:'Brokerage statements, dividend notices',      bg:'#eeedfe'},
+  {id:'business',icon:'💼',name:'Sole trader / ABN',  desc:'BAS, bank statements, invoices',              bg:'#faece7'},
+  {id:'medical',icon:'🏥', name:'Medical / SAPTO',    desc:'Medicare levy exemptions, aged care',         bg:'#fbeaf0'},
+  {id:'loan',   icon:'🏦', name:'Loan statements',    desc:'Investment property loans, interest',         bg:'#eaf3de'},
+  {id:'other',  icon:'📄', name:'Other documents',    desc:'FHB, super, offsets, levies',                 bg:'#f1efe8'},
+];
+
+// PII scrub patterns
+const PII_PATTERNS = [
+  /\b\d{3}\s?\d{3}\s?\d{3}\b/g,           // TFN
+  /\bBSB\s*\d{3}[-\s]?\d{3}\b/gi,         // BSB
+  /\b\d{2,3}-?\d{3}-?\d{3}\b/g,           // ABN fragments
+  /\b[A-Z][a-z]+\s[A-Z][a-z]+\b/g,        // Name-like (basic)
+];
+
+function scrubPII(text) {
+  let t = text;
+  PII_PATTERNS.forEach(p => { t = t.replace(p, '[REDACTED]'); });
+  return t;
+}
+
+// ══════════════════════════════════════════
+//  API KEY
+// ══════════════════════════════════════════
+function onApiKey() {
+  apiKey = document.getElementById('apiKey').value.trim();
+  const hasKey = apiKey.length > 10;
+  document.getElementById('apiWrap').style.display = hasKey ? 'none' : '';
+  document.getElementById('apiOk').style.display = hasKey ? '' : 'none';
+}
+
+// ══════════════════════════════════════════
+//  INCOME TOGGLES
+// ══════════════════════════════════════════
+function toggleIncome(el) {
+  el.classList.toggle('on');
+  const box = el.querySelector('.toggle-box');
+  const type = el.dataset.type;
+  if (el.classList.contains('on')) {
+    box.textContent = '✓';
+    activeIncomeTypes.add(type);
+  } else {
+    box.textContent = '';
+    activeIncomeTypes.delete(type);
+  }
+}
+
+// ══════════════════════════════════════════
+//  PANEL SWITCHING
+// ══════════════════════════════════════════
+const PANELS = ['interview','vault','drafter'];
+const PANEL_TITLES = {interview:'Client Tax Interview', vault:'Document Vault', drafter:'Return Drafter'};
+
+function switchPanel(name) {
+  PANELS.forEach(p => {
+    document.getElementById('panel-'+p).classList.toggle('hidden', p !== name);
+    document.getElementById('nav-'+p).classList.toggle('active', p === name);
+  });
+  document.getElementById('topTitle').textContent = PANEL_TITLES[name];
+
+  // topbar button visibility
+  document.getElementById('processVaultBtn').style.display = name === 'vault' ? '' : 'none';
+  document.getElementById('draftReturnBtn').style.display = name === 'vault' ? '' : 'none';
+
+  if (name === 'vault') {
+    const hasDocs = docs.length > 0;
+    document.getElementById('processVaultBtn').disabled = !hasDocs;
+  }
+}
+
+// ══════════════════════════════════════════
+//  INTERVIEW CHAT
+// ══════════════════════════════════════════
+function newClient() {
+  chatMessages = [];
+  document.getElementById('chatWrap').innerHTML = '';
+  clientActive = true;
+  document.getElementById('clientPill').textContent = 'Active session';
+  document.getElementById('summaryContent').innerHTML = '<div class="sum-placeholder">Start a conversation to populate the summary</div>';
+  document.getElementById('risksContent').innerHTML = '';
+}
+
+function startWith(prompt) {
+  if (!clientActive) newClient();
+  document.getElementById('chatInput').value = prompt;
+  sendChat();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+}
+
+async function sendChat() {
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  const input = document.getElementById('chatInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+  const text = scrubPII(raw);
+  input.value = '';
+  input.style.height = 'auto';
+  if (!clientActive) newClient();
+
+  appendChatMsg('user', text);
+  chatMessages.push({role:'user', content: text});
+
+  const loadId = appendChatMsg('assistant', '<span class="spin"></span> Thinking…', true);
+
+  const incomeList = [...activeIncomeTypes].join(', ');
+  const system = `You are AusTax Agent, an expert Australian tax accountant assistant — Accountant Edition. You are conducting a structured tax interview for FY2024–25.
+
+Active income types for this client: ${incomeList}
+
+You:
+- Ask focused, one-at-a-time questions to build a complete tax picture
+- Reference relevant ATO sections, item numbers, and rulings
+- Flag deduction risks and opportunities
+- Keep responses concise and professional
+- After each exchange, append a short SUMMARY block and a RISKS block (use → prefix) so the accountant can track progress
+- Never ask for TFN, full name, DOB, address, ABN, or bank details
+
+Format summary as:
+SUMMARY
+• Item 1 Salary: $...
+• Item D1 WFH: $...
+etc.
+
+RISKS
+→ [risk description]`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, system, messages: chatMessages})
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message || 'API error');
+    const reply = data.content.map(c=>c.text||'').join('');
+    chatMessages.push({role:'assistant', content: reply});
+    removeMsg(loadId);
+    appendChatMsg('assistant', reply);
+    parseSummaryAndRisks(reply);
+  } catch(e) {
+    removeMsg(loadId);
+    appendChatMsg('assistant', 'Error: ' + e.message);
+  }
+}
+
+function appendChatMsg(role, html, raw=false) {
+  const wrap = document.getElementById('chatWrap');
+  const id = 'cm-' + Date.now() + Math.random().toString(36).slice(2);
+  const d = document.createElement('div');
+  d.className = 'msg'; d.id = id;
+  d.innerHTML = `<div class="msg-role">${role}</div><div class="msg-body ${role}${raw?' loading':''}">${raw ? html : escHtml(html)}</div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop = wrap.scrollHeight;
+  return id;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function removeMsg(id) { const e = document.getElementById(id); if(e) e.remove(); }
+
+function parseSummaryAndRisks(text) {
+  // Extract SUMMARY block
+  const sumMatch = text.match(/SUMMARY\n([\s\S]*?)(?=\nRISKS|\n\n|$)/);
+  if (sumMatch) {
+    const lines = sumMatch[1].trim().split('\n').filter(l=>l.trim());
+    if (lines.length) {
+      document.getElementById('summaryContent').innerHTML = lines.map(l =>
+        `<div class="sum-row"><span class="sum-label">${escHtml(l.replace(/^[•\-]\s*/,'').split(':')[0]||'')}</span><span class="sum-val">${escHtml((l.split(':')[1]||'').trim())}</span></div>`
+      ).join('');
+    }
+  }
+  // Extract RISKS block
+  const riskMatch = text.match(/RISKS\n([\s\S]*?)(?=\n\n|$)/);
+  if (riskMatch) {
+    const risks = riskMatch[1].trim().split('\n').filter(l=>l.match(/^→/));
+    document.getElementById('risksContent').innerHTML = risks.map(r =>
+      `<div class="risk-item">${escHtml(r.replace(/^→\s*/,''))}</div>`
+    ).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+//  DOCUMENT VAULT
+// ══════════════════════════════════════════
+
+// Build doc type grid
+(function buildDocTypeGrid(){
+  const g = document.getElementById('docTypeGrid');
+  DOC_TYPES.forEach(dt => {
+    const c = document.createElement('div');
+    c.className = 'dtype-card'; c.id = 'dtype-'+dt.id;
+    c.innerHTML = `<span class="dtype-icon">${dt.icon}</span><div class="dtype-name">${dt.name}</div><div class="dtype-desc">${dt.desc}</div>`;
+    c.onclick = () => c.classList.toggle('sel');
+    g.appendChild(c);
+  });
+})();
+
+function dragOver(e){ e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
+function dragLeave(){ document.getElementById('dropZone').classList.remove('drag'); }
+function doDrop(e){ e.preventDefault(); dragLeave(); addFiles(e.dataTransfer.files); }
+
+function addFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!['application/pdf','image/png','image/jpeg'].includes(f.type)) return;
+    docs.push({ id:++docIdSeq, file:f, type:guessType(f.name), status:'pending', extracted:null });
+  });
+  renderDocList();
+  document.getElementById('docListWrap').style.display = docs.length ? '' : 'none';
+  document.getElementById('processVaultBtn').disabled = false;
+}
+
+function guessType(n) {
+  n = n.toLowerCase();
+  if (/payg|income|salary|payment/.test(n)) return 'payg';
+  if (/rental|rent|property/.test(n)) return 'rental';
+  if (/invest|broker|dividend|cgt|share/.test(n)) return 'invest';
+  if (/receipt|deduct|expense/.test(n)) return 'receipt';
+  if (/loan|mortgage|interest/.test(n)) return 'loan';
+  if (/bas|abn|sole|business/.test(n)) return 'business';
+  return 'other';
+}
+
+function renderDocList() {
+  const list = document.getElementById('docList');
+  list.innerHTML = '';
+  document.getElementById('docCount').textContent = docs.length;
+  docs.forEach(doc => {
+    const dt = DOC_TYPES.find(d=>d.id===doc.type) || DOC_TYPES[7];
+    const statusLabel = {pending:'Pending', processing:'Extracting…', done:'Extracted', error:'Error'}[doc.status];
+    const el = document.createElement('div');
+    el.className = 'doc-item'; el.id = 'di-'+doc.id;
+    el.innerHTML = `
+      <div class="doc-item-icon" style="background:${dt.bg}">${dt.icon}</div>
+      <div class="doc-item-info">
+        <div class="doc-item-name">${escHtml(doc.file.name)}</div>
+        <div class="doc-item-meta">${dt.name} · ${(doc.file.size/1024).toFixed(0)} KB</div>
+      </div>
+      <select class="type-sel" onchange="changeDocType(${doc.id},this.value)">
+        ${DOC_TYPES.map(d=>`<option value="${d.id}"${d.id===doc.type?' selected':''}>${d.name}</option>`).join('')}
+      </select>
+      <span class="doc-status ${doc.status}">${statusLabel}</span>
+      <span class="doc-remove" onclick="removeDoc(${doc.id})">✕</span>`;
+    list.appendChild(el);
+  });
+}
+
+function changeDocType(id, t) { const d=docs.find(x=>x.id===id); if(d) d.type=t; }
+function removeDoc(id) {
+  docs = docs.filter(d=>d.id!==id);
+  renderDocList();
+  if (!docs.length) document.getElementById('docListWrap').style.display='none';
+  rebuildExtracted(); updateVaultSummary();
+}
+
+async function processAllDocs() {
+  if (!apiKey) { alert('Please enter your Anthropic API key in the sidebar.'); return; }
+  document.getElementById('processVaultBtn').disabled = true;
+  const pending = docs.filter(d=>d.status!=='done');
+  for (const doc of pending) {
+    doc.status = 'processing'; renderDocList();
+    try {
+      doc.extracted = await extractDoc(doc);
+      doc.status = 'done';
+    } catch(e) {
+      doc.status = 'error'; doc.extracted = {error:e.message};
+    }
+    renderDocList();
+  }
+  rebuildExtracted(); updateVaultSummary();
+  document.getElementById('processVaultBtn').disabled = false;
+  document.getElementById('draftReturnBtn').disabled = false;
+  document.getElementById('drafterDot').classList.add('on');
+  document.getElementById('vaultDot').classList.add('on');
+  document.getElementById('vaultSummaryWrap').style.display = '';
+}
+
+async function extractDoc(doc) {
+  const dt = DOC_TYPES.find(d=>d.id===doc.type);
+  const b64 = await toBase64(doc.file);
+  const isImg = doc.file.type !== 'application/pdf';
+  const sys = `You are an Australian tax document parser. Extract all tax-relevant figures and return ONLY valid JSON — no markdown, no backticks, no preamble. Structure:
+{"docType":"${doc.type}","docLabel":"${dt.name}","fields":[{"label":"...","value":"...","ato_code":"..."}],"income":null,"taxWithheld":null,"deductions":null,"rentalIncome":null,"rentalExpenses":null,"capitalGains":null,"notes":"..."}
+Use actual ATO item numbers in ato_code (e.g. Item 1, D1, 15). Return ONLY the JSON object.`;
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys,
+      messages:[{role:'user', content:[
+        {type: isImg?'image':'document', source:{type:'base64', media_type:doc.file.type, data:b64}},
+        {type:'text', text:'Extract all tax-relevant data from this document as JSON.'}
+      ]}]
+    })
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message||'API error');
+  const raw = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+  return JSON.parse(raw);
+}
+
+function toBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = ()=>res(r.result.split(',')[1]);
+    r.onerror = ()=>rej(new Error('Read error'));
+    r.readAsDataURL(file);
+  });
+}
+
+function rebuildExtracted() {
+  const wrap = document.getElementById('extractedWrap');
+  const cards = document.getElementById('extractedCards');
+  const done = docs.filter(d=>d.status==='done'&&d.extracted&&!d.extracted.error);
+  if (!done.length) { wrap.style.display='none'; return; }
+  wrap.style.display='';
+  cards.innerHTML = '';
+  done.forEach(doc => {
+    const ex = doc.extracted;
+    const dt = DOC_TYPES.find(d=>d.id===doc.type)||DOC_TYPES[7];
+    const fields = (ex.fields||[]).slice(0,8);
+    const c = document.createElement('div');
+    c.className = 'ext-panel';
+    c.innerHTML = `
+      <div class="ext-hdr">
+        <span>${dt.icon}</span><span>${escHtml(doc.file.name)}</span>
+        <span style="margin-left:auto;font-size:10px;font-family:'Courier New',monospace;color:var(--hint);">${escHtml(ex.docLabel||dt.name)}</span>
+      </div>
+      <div class="ext-body">
+        <div class="field-grid">
+          ${fields.map(f=>`<div><div class="f-label">${f.ato_code?f.ato_code+' — ':''}${escHtml(f.label)}</div><div class="f-val">${escHtml(f.value)}</div></div>`).join('')}
+        </div>
+        ${ex.notes?`<div class="ext-notes">${escHtml(ex.notes)}</div>`:''}
+      </div>`;
+    cards.appendChild(c);
+  });
+}
+
+function updateVaultSummary() {
+  const done = docs.filter(d=>d.status==='done'&&d.extracted&&!d.extracted.error);
+  const parseVal = v => { if (v == null) return 0; const n = parseFloat(String(v).replace(/[$,\s]/g,'')); return isNaN(n) ? 0 : n; };
+  const sum = f => done.reduce((a,d)=>a+parseVal(d.extracted[f]),0);
+  const fmt = v => (v != null && v !== '') ? '$'+v.toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  document.getElementById('vSum-income').textContent = fmt(sum('income'));
+  document.getElementById('vSum-withheld').textContent = fmt(sum('taxWithheld'));
+  document.getElementById('vSum-deductions').textContent = sum('deductions') ? '-'+fmt(sum('deductions')) : '—';
+  document.getElementById('vSum-rental').textContent = fmt(sum('rentalIncome'));
+  document.getElementById('vSum-rentalExp').textContent = sum('rentalExpenses') ? '-'+fmt(sum('rentalExpenses')) : '—';
+  document.getElementById('vSum-cgt').textContent = fmt(sum('capitalGains'));
+}
+
+function buildVaultContext() {
+  const done = docs.filter(d=>d.status==='done'&&d.extracted&&!d.extracted.error);
+  if (!done.length) return 'No documents have been processed yet.';
+  return done.map(d => {
+    const ex = d.extracted;
+    const fields = (ex.fields||[]).map(f=>`${f.label}: ${f.value}`).join(', ');
+    return `[${ex.docLabel||d.type.toUpperCase()}] ${d.file.name}\n${fields}\nIncome:${ex.income||'N/A'} Tax withheld:${ex.taxWithheld||'N/A'} Deductions:${ex.deductions||'N/A'} Rental income:${ex.rentalIncome||'N/A'} Rental exp:${ex.rentalExpenses||'N/A'} CGT:${ex.capitalGains||'N/A'}\nNotes: ${ex.notes||''}`;
+  }).join('\n\n');
+}
+
+// ══════════════════════════════════════════
+//  RETURN DRAFTER
+// ══════════════════════════════════════════
+function handleDrafterKey(e) {
+  if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendDrafter(); }
+}
+
+async function sendDrafter() {
+  if (!apiKey) { alert('Please enter your Anthropic API key.'); return; }
+  const input = document.getElementById('drafterInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height='auto';
+
+  appendDrafterMsg('user', text);
+  drafterMessages.push({role:'user', content:text});
+  const loadId = appendDrafterMsg('assistant', '<span class="spin"></span> Drafting…', true);
+  document.getElementById('drafterSend').disabled = true;
+
+  const ctx = buildVaultContext();
+  const sys = `You are AusTax Agent, an expert Australian tax accountant. You have extracted data from the client's documents.
+
+EXTRACTED DOCUMENT DATA:
+${ctx}
+
+Also available from interview session:
+${chatMessages.map(m=>m.role+': '+m.content).join('\n').slice(0,2000)||'(no interview session)'}
+
+Your tasks:
+- Draft accurate ATO-compliant FY2024-25 tax return summaries
+- Identify all claimable deductions and income sources  
+- Reference ATO item numbers (Item 1, D1–D15, Section 15, etc.)
+- Calculate estimated taxable income, tax payable, and refund/liability (use 2024-25 tax rates)
+- Flag missing information or items needing clarification
+- Be precise, professional, structured. Australian resident assumed unless stated.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys, messages: drafterMessages})
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error?.message||'API error');
+    const reply = data.content.map(c=>c.text||'').join('');
+    drafterMessages.push({role:'assistant', content:reply});
+    removeMsg(loadId);
+    appendDrafterMsg('assistant', reply);
+  } catch(e) {
+    removeMsg(loadId);
+    appendDrafterMsg('assistant','Error: '+e.message);
+  }
+  document.getElementById('drafterSend').disabled = false;
+}
+
+function appendDrafterMsg(role, html, raw=false) {
+  const wrap = document.getElementById('drafterWrap');
+  const id = 'dm-'+Date.now()+Math.random().toString(36).slice(2);
+  const d = document.createElement('div');
+  d.className='msg'; d.id=id;
+  d.innerHTML=`<div class="msg-role">${role}</div><div class="msg-body ${role}${raw?' loading':''}">${raw?html:escHtml(html)}</div>`;
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+  return id;
+}
+
+// ══════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════
+function exportNotes() {
+  const lines = [];
+  lines.push('AusTax Agent — Accountant Notes Export');
+  lines.push('FY 2024–25');
+  lines.push('Generated: ' + new Date().toLocaleString('en-AU'));
+  lines.push('');
+  lines.push('=== INTERVIEW TRANSCRIPT ===');
+  chatMessages.forEach(m => lines.push(`[${m.role.toUpperCase()}] ${m.content}`));
+  lines.push('');
+  lines.push('=== VAULT EXTRACTED DATA ===');
+  docs.filter(d=>d.status==='done'&&d.extracted&&!d.extracted.error).forEach(d => {
+    const ex = d.extracted;
+    lines.push(`\n--- ${d.file.name} (${ex.docLabel||d.type}) ---`);
+    (ex.fields||[]).forEach(f => lines.push(`  ${f.ato_code||''} ${f.label}: ${f.value}`));
+    if (ex.notes) lines.push(`  Notes: ${ex.notes}`);
+  });
+  lines.push('');
+  lines.push('=== RETURN DRAFTER ===');
+  drafterMessages.forEach(m => lines.push(`[${m.role.toUpperCase()}] ${m.content}`));
+
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'austax-notes-fy2425.txt';
+  a.click();
+}
+</script>
+</body>
+</html>
