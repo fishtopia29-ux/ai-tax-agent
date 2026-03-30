@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{FIRM_NAME}} — Client Letter</title>
+<style>
+  /* ─── EDITABLE FIRM STYLES ─────────────────────────────────────────────────
+     Customise fonts, colours, and spacing here to match your firm's branding.
+     Do not change the {{TOKEN}} placeholders — they are replaced automatically.
+  ──────────────────────────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    color: #1a1a1a;
+    background: #fff;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    padding: 20mm 22mm 20mm 22mm;
+    position: relative;
+  }
+
+  /* ─── FIRM HEADER ─── */
+  .firm-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 14mm;
+    padding-bottom: 5mm;
+    border-bottom: 1.5pt solid #1a3a5c;
+  }
+  .firm-logo-area {
+    display: flex;
+    flex-direction: column;
+  }
+  .firm-name {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #1a3a5c;
+    letter-spacing: -0.5px;
+  }
+  .firm-tagline {
+    font-size: 9pt;
+    color: #6b7280;
+    margin-top: 2px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .firm-contact {
+    font-size: 9pt;
+    color: #4b5563;
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* ─── LETTER BODY ─── */
+  .letter-date { margin-bottom: 8mm; font-size: 11pt; }
+  .letter-addressee { margin-bottom: 6mm; line-height: 1.6; }
+  .letter-subject { font-weight: 700; margin-bottom: 6mm; }
+  .letter-salutation { margin-bottom: 4mm; }
+  .letter-body p { margin-bottom: 4mm; line-height: 1.7; }
+  .amount-highlight {
+    font-weight: 700;
+    color: #1a3a5c;
+  }
+  .letter-close { margin-top: 8mm; }
+  .letter-close .sign-space { height: 18mm; }
+  .letter-close .signer-name { font-weight: 700; }
+
+  /* ─── PAGE BREAK ─── */
+  .page-break { page-break-after: always; }
+
+  /* ─── INVOICE ─── */
+  .invoice-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 10mm;
+    padding-bottom: 5mm;
+    border-bottom: 1.5pt solid #1a3a5c;
+  }
+  .invoice-title {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1a3a5c;
+    margin-bottom: 6mm;
+    margin-top: 4mm;
+  }
+  .invoice-meta {
+    display: flex;
+    gap: 20mm;
+    margin-bottom: 8mm;
+  }
+  .invoice-meta-col { }
+  .invoice-meta-label { font-size: 9pt; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .invoice-meta-value { font-size: 11pt; font-weight: 600; }
+  .invoice-to {
+    margin-bottom: 8mm;
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+  .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 6mm;
+  }
+  .invoice-table th {
+    background: #1a3a5c;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 10pt;
+    text-align: left;
+  }
+  .invoice-table th.r { text-align: right; }
+  .invoice-table td {
+    padding: 8px 10px;
+    font-size: 10.5pt;
+    border-bottom: 0.5pt solid #e5e7eb;
+  }
+  .invoice-table td.r { text-align: right; }
+  .invoice-table tr.subtotal td { border-top: 1pt solid #d1d5db; font-weight: 600; }
+  .invoice-table tr.total td { border-top: 2pt solid #1a3a5c; font-weight: 700; font-size: 12pt; color: #1a3a5c; }
+  .invoice-table tr.paid td { color: #059669; }
+  .invoice-table tr.balance td { background: #f0f4f9; font-weight: 700; font-size: 12pt; }
+
+  .payment-section {
+    margin-top: 8mm;
+    padding: 5mm 6mm;
+    background: #f8fafc;
+    border: 0.5pt solid #d1d5db;
+    border-radius: 4px;
+  }
+  .payment-title { font-weight: 700; font-size: 11pt; margin-bottom: 3mm; color: #1a3a5c; }
+  .payment-row { display: flex; gap: 8mm; margin-bottom: 1.5mm; font-size: 10.5pt; }
+  .payment-label { color: #6b7280; min-width: 40mm; }
+  .payment-value { font-weight: 600; }
+
+  .invoice-footer {
+    margin-top: 10mm;
+    font-size: 9pt;
+    color: #9ca3af;
+    text-align: center;
+    border-top: 0.5pt solid #e5e7eb;
+    padding-top: 4mm;
+  }
+
+  /* ─── PRINT ─── */
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; padding: 15mm 18mm; width: 100%; }
+    .no-print { display: none !important; }
+    .page-break { page-break-after: always; }
+  }
+
+  /* ─── SCREEN TOOLBAR ─── */
+  .toolbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #1a3a5c;
+    color: #fff;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 999;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+  }
+  .toolbar-title { flex: 1; font-weight: 600; }
+  .toolbar button {
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .toolbar button:hover { background: rgba(255,255,255,0.25); }
+  .toolbar button.primary { background: #2d6a4f; border-color: #2d6a4f; }
+  .pages-wrap { margin-top: 48px; }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span class="toolbar-title">📄 Client Letter &amp; Invoice — {{CLIENT_NAME}} · FY {{FY_LABEL}}</span>
+  <button onclick="window.print()">🖨 Print / Save PDF</button>
+  <button onclick="window.close()">✕ Close</button>
+</div>
+
+<div class="pages-wrap">
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PAGE 1 — COVER LETTER
+     ═══════════════════════════════════════════════════════════════════════════
+     EDITABLE TOKENS:
+       {{FIRM_NAME}}        — your firm name (e.g. Navigate Financial)
+       {{FIRM_TAGLINE}}     — tagline shown under firm name (e.g. FINANCIAL ADVISERS)
+       {{FIRM_ADDRESS}}     — street address
+       {{FIRM_SUBURB}}      — suburb / city
+       {{FIRM_STATE_PC}}    — state and postcode
+       {{FIRM_PHONE}}       — phone number
+       {{FIRM_EMAIL}}       — email address
+       {{FIRM_ABN}}         — ABN
+       {{LETTER_DATE}}      — date of letter (auto-populated)
+       {{CLIENT_NAME}}      — client full name (auto-populated)
+       {{CLIENT_FIRST}}     — client first name for salutation (auto-populated)
+       {{RETURN_YEAR}}      — e.g. 2025 (auto-populated from FY)
+       {{FY_LABEL}}         — e.g. 2024–25 (auto-populated)
+       {{AMOUNT_PAYABLE}}   — tax payable amount (auto-populated from drafter)
+       {{SIGNER_NAME}}      — signing partner/staff name
+       {{SIGNER_TITLE}}     — title, e.g. Partner
+     ─────────────────────────────────────────────────────────────────────── -->
+<div class="page">
+
+  <div class="firm-header">
+    <div class="firm-logo-area">
+      <div class="firm-name">{{FIRM_NAME}}</div>
+      <div class="firm-tagline">{{FIRM_TAGLINE}}</div>
+    </div>
+    <div class="firm-contact">
+      {{FIRM_ADDRESS}}<br>
+      {{FIRM_SUBURB}}<br>
+      {{FIRM_STATE_PC}}<br>
+      Phone: {{FIRM_PHONE}}<br>
+      {{FIRM_EMAIL}}<br>
+      ABN: {{FIRM_ABN}}
+    </div>
+  </div>
+
+  <div class="letter-date">{{LETTER_DATE}}</div>
+
+  <div class="letter-addressee">
+    {{CLIENT_NAME}}<br>
+    Preparation of {{RETURN_YEAR}} Return
+  </div>
+
+  <div class="letter-salutation">Dear {{CLIENT_FIRST}},</div>
+
+  <div class="letter-body">
+    <p>Enclosed here within is your {{RETURN_YEAR}} return, together with an estimate of your
+    taxation position and a copy of the return for your retention. According to our estimate,
+    there should be a <span class="amount-highlight">payable amount of {{AMOUNT_PAYABLE}}</span>.</p>
+
+    <p>The Return has been compiled from the information you have supplied to us and consequently
+    accuracy depends on those details. Entitlement to certain tax deductions claimed is dependent
+    upon your having retained specific records which substantiate the expenditure. If you require
+    any assistance with record keeping, please contact us.</p>
+
+    <p>Whilst we have exercised due care and skill in preparing the return, relevant provisions of
+    the Income Assessment Act place the responsibility for the contents of the return with the
+    taxpayer and provide penalties for inaccurate or inadequate disclosure. Accordingly, would you
+    please check the details shown to satisfy yourself that the return is correct.</p>
+
+    <p>The original document should be signed where indicated and returned to us for lodgment.
+    The client copy of the return should be retained by you for a minimum of five years.</p>
+
+    <p>If you have any queries in relation to the contents of this letter, please do not hesitate
+    to contact us.</p>
+  </div>
+
+  <div class="letter-close">
+    <p>Yours sincerely,</p>
+    <div class="sign-space"></div>
+    <div class="signer-name">{{SIGNER_NAME}}</div>
+    <div>{{SIGNER_TITLE}}</div>
+    <div>{{FIRM_NAME}}</div>
+  </div>
+
+</div><!-- end page 1 -->
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PAGE 2 — TAX INVOICE
+     ═══════════════════════════════════════════════════════════════════════════
+     EDITABLE TOKENS (in addition to firm tokens above):
+       {{INVOICE_NUMBER}}   — invoice number (auto-incremented or manual)
+       {{INVOICE_DATE}}     — issue date (auto-populated: today)
+       {{INVOICE_DUE}}      — due date (auto-populated: today + 14 days)
+       {{FEE_EX_GST}}       — fee excluding GST
+       {{FEE_GST}}          — GST amount
+       {{FEE_INC_GST}}      — total fee including GST
+       {{BANK_NAME}}        — bank name for payment
+       {{BANK_ACCOUNT_NAME}}— account name
+       {{BANK_BSB}}         — BSB number
+       {{BANK_ACCOUNT}}     — account number
+     ─────────────────────────────────────────────────────────────────────── -->
+<div class="page">
+
+  <div class="invoice-header">
+    <div class="firm-logo-area">
+      <div class="firm-name">{{FIRM_NAME}}</div>
+      <div class="firm-tagline">{{FIRM_TAGLINE}}</div>
+      <div style="margin-top:6px; font-size:9pt; color:#4b5563; line-height:1.7;">
+        {{FIRM_ADDRESS}}, {{FIRM_SUBURB}} {{FIRM_STATE_PC}}<br>
+        Phone: {{FIRM_PHONE}} · {{FIRM_EMAIL}}<br>
+        ABN: {{FIRM_ABN}}
+      </div>
+    </div>
+  </div>
+
+  <div class="invoice-title">Tax Invoice</div>
+
+  <div class="invoice-meta">
+    <div class="invoice-meta-col">
+      <div class="invoice-meta-label">Invoice number</div>
+      <div class="invoice-meta-value">{{INVOICE_NUMBER}}</div>
+    </div>
+    <div class="invoice-meta-col">
+      <div class="invoice-meta-label">Issue date</div>
+      <div class="invoice-meta-value">{{INVOICE_DATE}}</div>
+    </div>
+    <div class="invoice-meta-col">
+      <div class="invoice-meta-label">Due date</div>
+      <div class="invoice-meta-value">{{INVOICE_DUE}}</div>
+    </div>
+  </div>
+
+  <div class="invoice-to">
+    <strong>Bill to:</strong><br>
+    {{CLIENT_NAME}}
+  </div>
+
+  <table class="invoice-table">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="r">Amount (AUD)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Preparation and lodgement of individual tax return for the year ended 30 June {{RETURN_YEAR}}</td>
+        <td class="r">{{FEE_EX_GST}}</td>
+      </tr>
+      <tr class="subtotal">
+        <td>GST (10%)</td>
+        <td class="r">{{FEE_GST}}</td>
+      </tr>
+      <tr class="total">
+        <td>Total amount (inc. GST)</td>
+        <td class="r">{{FEE_INC_GST}}</td>
+      </tr>
+      <tr class="paid">
+        <td>Total paid</td>
+        <td class="r">$0.00</td>
+      </tr>
+      <tr class="balance">
+        <td>Balance due</td>
+        <td class="r">{{FEE_INC_GST}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="payment-section">
+    <div class="payment-title">How to pay</div>
+    <div class="payment-row">
+      <span class="payment-label">Invoice number:</span>
+      <span class="payment-value">{{INVOICE_NUMBER}}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Due date:</span>
+      <span class="payment-value">{{INVOICE_DUE}}</span>
+    </div>
+    <div style="margin-top:3mm; font-weight:600; font-size:10pt; color:#1a3a5c;">Bank deposit</div>
+    <div class="payment-row">
+      <span class="payment-label">Bank:</span>
+      <span class="payment-value">{{BANK_NAME}}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Account name:</span>
+      <span class="payment-value">{{BANK_ACCOUNT_NAME}}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">BSB:</span>
+      <span class="payment-value">{{BANK_BSB}}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Account number:</span>
+      <span class="payment-value">{{BANK_ACCOUNT}}</span>
+    </div>
+    <div class="payment-row">
+      <span class="payment-label">Reference:</span>
+      <span class="payment-value">{{INVOICE_NUMBER}}</span>
+    </div>
+  </div>
+
+  <div class="invoice-footer">
+    {{FIRM_NAME}} · ABN {{FIRM_ABN}} · {{FIRM_EMAIL}} · {{FIRM_PHONE}}
+  </div>
+
+</div><!-- end page 2 -->
+
+</div><!-- end pages-wrap -->
+</body>
+</html>
