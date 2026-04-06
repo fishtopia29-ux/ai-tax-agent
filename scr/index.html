@@ -1138,9 +1138,9 @@ Active income types: ${incomeList}
 - After each exchange append SUMMARY and RISKS blocks
 Format:
 SUMMARY
-? Item 1 Salary: $...
+- Item 1 Salary: $...
 RISKS
-? [risk]
+-> [risk]
 Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
     try {
       const msgs = [...chatMessages, { role:"user", content:clean }];
@@ -1156,7 +1156,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
       }
       const riskMatch = reply.match(/RISKS\n([\s\S]*?)(?=\n\n|$)/);
       if (riskMatch) {
-        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("?")).map(r => r.replace(/^?\s*/, ""));
+        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("?")).map(r => r.replace(/^[?]\s*/, ""));
         dispatch({ type:"SET_RISKS", payload:risks });
       }
     } catch(e) {
