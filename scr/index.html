@@ -15,11 +15,11 @@
 <script type="text/babel">
 const { useState, useReducer, useRef, useEffect, useCallback } = React;
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  CONSTANTS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  FY CONFIG - loaded from fy-config.json, inline fallback if fetch fails
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 
 // Inline fallback - used if fy-config.json cannot be fetched
 const FY_CONFIG_FALLBACK = {
@@ -97,7 +97,7 @@ async function loadFYConfig() {
     FY_CONFIG_META = { ...data._meta, loadedFromRemote: true };
     DEFAULT_FY = data.defaultFY || Object.keys(data.years)[0];
     FY_OPTIONS = Object.keys(FY_CONFIG);
-    console.log("✓ FY config loaded from fy-config.json - last updated:", FY_CONFIG_META.lastUpdated);
+    console.log("? FY config loaded from fy-config.json - last updated:", FY_CONFIG_META.lastUpdated);
     return { success: true, meta: FY_CONFIG_META };
   } catch (e) {
     console.warn("FY config fetch failed, using built-in fallback:", e.message);
@@ -134,10 +134,10 @@ function checkInPeriod(dateStr, fyKey) {
 const MODEL = "claude-sonnet-4-20250514";
 const API_URL = "https://api.anthropic.com/v1/messages";
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  FIRM CONFIG - edit these to match your practice
 //  In future this will be loaded from a CRM or firm settings file
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 const FIRM_CONFIG = {
   name:        "Navigate Financial",
   tagline:     "Financial Advisers",
@@ -162,23 +162,23 @@ const INCOME_TYPES = [
 ];
 
 const DOC_TYPES = [
-  { id:"payg",    icon:"🧾", name:"PAYG Summary",       desc:"Employer payment summary / income statement", bg:"#e1f5ee" },
-  { id:"receipt", icon:"📋", name:"Deduction receipts",  desc:"Work expenses, tools, uniform, WFH",          bg:"#e6f1fb" },
-  { id:"rental",  icon:"🏠", name:"Rental property",     desc:"Income & expense statements, agent reports",  bg:"#faeeda" },
-  { id:"invest",  icon:"📈", name:"Investment / CGT",    desc:"Brokerage statements, dividend notices",      bg:"#eeedfe" },
-  { id:"business",icon:"💼", name:"Sole trader / ABN",   desc:"BAS, bank statements, invoices",              bg:"#faece7" },
-  { id:"medical", icon:"🏥", name:"Medical / SAPTO",     desc:"Medicare levy exemptions, aged care",         bg:"#fbeaf0" },
-  { id:"loan",    icon:"🏦", name:"Loan statements",     desc:"Investment property loans, interest",         bg:"#eaf3de" },
-  { id:"ess",     icon:"🏢", name:"ESS Statement",        desc:"Employee Share Scheme - Item 12, Box F",      bg:"#fce8f3" },
-  { id:"other",   icon:"📄", name:"Other documents",     desc:"FHB, super, offsets, levies",                 bg:"#f1efe8" },
-  { id:"insurance",icon:"🛡", name:"Income Protection",   desc:"TAL, AIA, MLC - premium paid & benefits received", bg:"#e8f0fb" },
+  { id:"payg",    icon:"?", name:"PAYG Summary",       desc:"Employer payment summary / income statement", bg:"#e1f5ee" },
+  { id:"receipt", icon:"?", name:"Deduction receipts",  desc:"Work expenses, tools, uniform, WFH",          bg:"#e6f1fb" },
+  { id:"rental",  icon:"?", name:"Rental property",     desc:"Income & expense statements, agent reports",  bg:"#faeeda" },
+  { id:"invest",  icon:"?", name:"Investment / CGT",    desc:"Brokerage statements, dividend notices",      bg:"#eeedfe" },
+  { id:"business",icon:"?", name:"Sole trader / ABN",   desc:"BAS, bank statements, invoices",              bg:"#faece7" },
+  { id:"medical", icon:"?", name:"Medical / SAPTO",     desc:"Medicare levy exemptions, aged care",         bg:"#fbeaf0" },
+  { id:"loan",    icon:"?", name:"Loan statements",     desc:"Investment property loans, interest",         bg:"#eaf3de" },
+  { id:"ess",     icon:"?", name:"ESS Statement",        desc:"Employee Share Scheme - Item 12, Box F",      bg:"#fce8f3" },
+  { id:"other",   icon:"?", name:"Other documents",     desc:"FHB, super, offsets, levies",                 bg:"#f1efe8" },
+  { id:"insurance",icon:"?", name:"Income Protection",   desc:"TAL, AIA, MLC - premium paid & benefits received", bg:"#e8f0fb" },
 ];
 
 const STARTER_PROMPTS = [
-  { icon:"🧾", title:"Full return interview",  sub:"PAYG + ABN + investments", prompt:"Full return interview - PAYG, ABN, and investments. Ask me about all income sources, deductions, and offsets for FY2024-25." },
-  { icon:"🏥", title:"Healthcare worker",       sub:"WFH + vehicle + uniform",  prompt:"I am a healthcare worker. Interview me about WFH expenses, vehicle use, uniform and laundry, and self-education for my FY2024-25 return." },
-  { icon:"🏠", title:"Rental property owner",  sub:"Neg gearing + depreciation",prompt:"I own a rental property. Walk me through rental income, negative gearing, depreciation schedule, and deductible expenses for FY2024-25." },
-  { icon:"📈", title:"CGT event review",        sub:"Shares, crypto, discount",  prompt:"I have CGT events to review - shares, crypto, and possibly the 50% discount. Walk me through each event for FY2024-25." },
+  { icon:"?", title:"Full return interview",  sub:"PAYG + ABN + investments", prompt:"Full return interview - PAYG, ABN, and investments. Ask me about all income sources, deductions, and offsets for FY2024-25." },
+  { icon:"?", title:"Healthcare worker",       sub:"WFH + vehicle + uniform",  prompt:"I am a healthcare worker. Interview me about WFH expenses, vehicle use, uniform and laundry, and self-education for my FY2024-25 return." },
+  { icon:"?", title:"Rental property owner",  sub:"Neg gearing + depreciation",prompt:"I own a rental property. Walk me through rental income, negative gearing, depreciation schedule, and deductible expenses for FY2024-25." },
+  { icon:"?", title:"CGT event review",        sub:"Shares, crypto, discount",  prompt:"I have CGT events to review - shares, crypto, and possibly the 50% discount. Walk me through each event for FY2024-25." },
 ];
 
 const INTERVIEW_CHIPS = [
@@ -190,16 +190,16 @@ const INTERVIEW_CHIPS = [
 ];
 
 const DRAFTER_CHIPS = [
-  { label:"✦ Draft full tax return", prompt:(fy) => `Draft a complete FY${getFYLabel(fy)} tax return based on all extracted documents. Show all income sources itemised, deductions, taxable income, gross tax, offsets, Medicare levy, total tax withheld, and estimated refund or amount payable. Reference ATO item numbers throughout.`, primary: true },
+  { label:"? Draft full tax return", prompt:(fy) => `Draft a complete FY${getFYLabel(fy)} tax return based on all extracted documents. Show all income sources itemised, deductions, taxable income, gross tax, offsets, Medicare levy, total tax withheld, and estimated refund or amount payable. Reference ATO item numbers throughout.`, primary: true },
   { label:"Estimate refund",          prompt:"Calculate my estimated refund or tax payable based on all documents." },
   { label:"Review deductions",        prompt:"List all deductions identified from the documents and flag any I may have missed." },
   { label:"Explain ESS",              prompt:"Explain the ESS income and how it is treated in this tax return." },
   { label:"Flag missing info",        prompt:"What information is still missing to finalise this return?" },
 ];
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  PII SCRUBBER
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 const PII_PATTERNS = [
   /\b\d{3}\s?\d{3}\s?\d{3}\b/g,
   /\bBSB\s*\d{3}[-\s]?\d{3}\b/gi,
@@ -211,9 +211,9 @@ function scrubPII(text) {
   return t;
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  TAX CALCULATIONS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function calcTax(inc, fyKey) {
   const cfg = getFYConfig(fyKey);
   const brackets = cfg.brackets;
@@ -263,7 +263,7 @@ function calcMedicareLevy(taxableIncome, familyIncome, numDependants, hasSpouse,
   return taxableIncome * rate;
 }
 // PHI rebate clawback - FY2024-25 income tiers
-// Tier 0: ≤$93,000 single / ≤$186,000 family - full rebate (no clawback)
+// Tier 0: ?$93,000 single / ?$186,000 family - full rebate (no clawback)
 // Tier 1: $93,001-$108,000 / $186,001-$216,000 - reduced rebate
 // Tier 2: $108,001-$144,000 / $216,001-$288,000 - further reduced
 // Tier 3: >$144,000 / >$288,000 - no rebate entitlement (full clawback)
@@ -350,13 +350,11 @@ function computeTotals(docs, clientProfile, fyKey) {
            totalIncome, taxableIncome, grossTax, lito, lmito, medicare, phiClawback, netTax, totalTaxWH, refund, hasSpouse, numDependants };
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  STATE / REDUCER
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 const INITIAL = {
-  apiKey: (window.GREENGRAPH_CONFIG?.ANTHROPIC_API_KEY && window.GREENGRAPH_CONFIG.ANTHROPIC_API_KEY !== "sk-ant-YOUR-KEY-HERE")
-    ? window.GREENGRAPH_CONFIG.ANTHROPIC_API_KEY
-    : "",
+  apiKey: (window.GREENGRAPH_CONFIG?.ANTHROPIC_API_KEY && window.GREENGRAPH_CONFIG.ANTHROPIC_API_KEY !== "sk-ant-YOUR-KEY-HERE") ? window.GREENGRAPH_CONFIG.ANTHROPIC_API_KEY : "",
   panel: "interview",
   incomeTypes: new Set(["payg"]),
   chatMessages: [],
@@ -371,8 +369,7 @@ const INITIAL = {
   showFYModal: true,
   selectedFY: DEFAULT_FY,
   configStatus: { loaded: false, fromRemote: false, lastUpdated: null, error: null },
-  clientProfile: { hasSpouse: false, numDependants: 0, spouseIncome: 0, phiRebateReceived: 0,
-    occupation: "", occupationSource: "manual", atoJobTitle: null, atoJobTitleStatus: "not_fetched" },
+  clientProfile: { hasSpouse: false, numDependants: 0, spouseIncome: 0, phiRebateReceived: 0, occupation: "", occupationSource: "manual", atoJobTitle: null, atoJobTitleStatus: "not_fetched" },
   xero: { connected: false, orgName: null, orgId: null, accessToken: null, tenantId: null, lastSubmit: null, submitStatus: null, submitError: null },
 };
 
@@ -412,28 +409,23 @@ function reducer(state, action) {
   }
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  API HELPERS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 async function callClaude(apiKey, { system, messages, maxTokens = 1000 }) {
-  // Config priority: window.GREENGRAPH_CONFIG > passed apiKey argument
   const cfg = window.GREENGRAPH_CONFIG || {};
   const useProxy = cfg.USE_PROXY === true;
   const resolvedKey = cfg.ANTHROPIC_API_KEY && cfg.ANTHROPIC_API_KEY !== "sk-ant-YOUR-KEY-HERE"
-    ? cfg.ANTHROPIC_API_KEY
-    : apiKey;
+    ? cfg.ANTHROPIC_API_KEY : apiKey;
   const url = useProxy ? (cfg.PROXY_URL || "/api/claude") : API_URL;
-
   const headers = { "Content-Type": "application/json" };
   if (!useProxy) {
     headers["x-api-key"] = resolvedKey;
     headers["anthropic-version"] = "2023-06-01";
     headers["anthropic-dangerous-direct-browser-access"] = "true";
   }
-
   const resp = await fetch(url, {
-    method: "POST",
-    headers,
+    method: "POST", headers,
     body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages }),
   });
   const data = await resp.json();
@@ -481,9 +473,9 @@ function guessDocType(name) {
   return "other";
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ARCHIVE / EXPORT HELPERS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function buildArchiveText(clientName, state) {
   const lines = [];
   lines.push("AusTax Agent - Accountant Notes");
@@ -547,7 +539,7 @@ Box F (Deferral - FULLY ASSESSABLE s.83A-110): $${parseVal(ex.essIncome).toFixed
 Box D (Upfront eligible, $1k concession s.83A-35): $${parseVal(ex.essBoxD).toFixed(2)}
 Box E (Upfront not eligible): $${parseVal(ex.essBoxE).toFixed(2)}
 Box C (TFN withheld - offsets tax): $${parseVal(ex.essTaxWithheld).toFixed(2)}
-Tx total: $${totalDiscount.toFixed(2)} ${Math.abs(totalDiscount-parseVal(ex.essIncome))<1?"✓ matches Box F":"⚠ use Box F"}
+Tx total: $${totalDiscount.toFixed(2)} ${Math.abs(totalDiscount-parseVal(ex.essIncome))<1?"? matches Box F":"? use Box F"}
 TRANSACTIONS (${txs.length} rows - SALE rows use sale-date taxing point; VEST rows: cost base = assessable amount for future CGT):
 ${txTable}
 Notes: ${ex.notes||""}
@@ -563,9 +555,9 @@ Date: ${ex.documentDate||"not extracted"} | Period: ${ex.periodStart||""}${ex.pe
   }).join("\n\n");
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  STYLES
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 const CSS = `
 :root {
   --bg:#f5f7f5; --surface:#ffffff; --surface2:#eef2ee; --surface3:#e0e8e0;
@@ -873,9 +865,9 @@ body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);height:1
 .op-gen-item{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 10px;border-radius:var(--rs);background:var(--surface2);border:0.5px solid var(--border);}
 `;
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ERROR BOUNDARY
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
   static getDerivedStateFromError(e) { return { error: e }; }
@@ -893,9 +885,9 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  SMALL SHARED COMPONENTS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function Spinner() { return <span className="spin" />; }
 
 function SbSection({ children }) {
@@ -911,9 +903,9 @@ function SumRow({ label, value, bold, color }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ITR TOTALS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function VaultTotals({ docs, clientProfile, selectedFY }) {
   const t = computeTotals(docs, clientProfile, selectedFY);
   const f  = v => v > 0 ? fmtAUD(v) : "-";
@@ -952,9 +944,9 @@ function VaultTotals({ docs, clientProfile, selectedFY }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  SIDEBAR
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function Sidebar({ state, dispatch, onExport }) {
   const { apiKey, incomeTypes, panel, interviewSummary, interviewRisks, docs, archivedClients } = state;
   const hasDoneVault = docs.some(d => d.status === "done");
@@ -993,39 +985,31 @@ function Sidebar({ state, dispatch, onExport }) {
             <div className="sb-logo-ed">INTELLIGENT AGENTS</div>
           </div>
         </div>
-        <span className="sb-fy">Tax Agent · FY {getFYLabel(state.selectedFY)}</span>
+        <span className="sb-fy">Tax Agent ? FY {getFYLabel(state.selectedFY)}</span>
       </div>
       <div className="sb-scroll">
         {(() => {
           const cfg = window.GREENGRAPH_CONFIG || {};
           const hasConfigKey = cfg.ANTHROPIC_API_KEY && cfg.ANTHROPIC_API_KEY !== "sk-ant-YOUR-KEY-HERE";
           const useProxy = cfg.USE_PROXY === true;
-          if (hasConfigKey || useProxy) {
-            return (
-              <div className="api-ok">
-                🔑 {useProxy ? "Proxy mode - key on server" : "API key configured"}
-              </div>
-            );
-          }
-          if (apiKey.length > 10) {
-            return <div className="api-ok">🔑 API key set</div>;
-          }
+          if (hasConfigKey || useProxy) return <div className="api-ok">? {useProxy ? "Proxy mode - key on server" : "API key configured"}</div>;
+          if (apiKey.length > 10) return <div className="api-ok">? API key set</div>;
           return (
             <div className="api-wrap">
-              <div>🔑 Anthropic API Key</div>
+              <div>? Anthropic API Key</div>
               <div style={{ fontSize:10, marginTop:2, opacity:0.8 }}>Browser only - never stored</div>
               <input type="password" placeholder="sk-ant-..." autoComplete="off"
                 onChange={e => dispatch({ type:"SET_API_KEY", payload:e.target.value.trim() })} />
             </div>
           );
         })()}
-        <div className="pii-pill">🛡 PII Guard Active</div>
+        <div className="pii-pill">? PII Guard Active</div>
         <SbSection>Client profile</SbSection>
         <div style={{ padding:"4px 14px 6px" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
             <div className={`toggle-box${state.clientProfile.hasSpouse?" on":""}`} style={{ cursor:"pointer", flexShrink:0 }}
               onClick={() => dispatch({ type:"SET_CLIENT_PROFILE", payload:{ hasSpouse:!state.clientProfile.hasSpouse } })}>
-              {state.clientProfile.hasSpouse ? "✓" : ""}
+              {state.clientProfile.hasSpouse ? "?" : ""}
             </div>
             <span style={{ fontSize:12, color:"#7ab87a" }}>Has spouse / de facto</span>
           </div>
@@ -1056,22 +1040,15 @@ function Sidebar({ state, dispatch, onExport }) {
               onChange={e => dispatch({ type:"SET_CLIENT_PROFILE", payload:{ occupation: e.target.value, occupationSource:"manual" } })}
               style={{ width:"100%", padding:"3px 6px", fontSize:11, background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.15)", borderRadius:3, color:"#e8f5e8", fontFamily:"Courier New" }} />
           </div>
-          {state.clientProfile.atoJobTitle && (
-            <div style={{ fontSize:10, fontFamily:"Courier New", color:"#4ab45a", padding:"3px 0" }}>
-              ✓ ATO: {state.clientProfile.atoJobTitle}
-            </div>
-          )}
           {!state.clientProfile.atoJobTitle && (
-            <div style={{ fontSize:10, fontFamily:"Courier New", color:"#4a7a4a", padding:"2px 0" }}>
-              ATO job title: not yet available
-            </div>
+            <div style={{ fontSize:10, fontFamily:"Courier New", color:"#4a7a4a", padding:"2px 0" }}>ATO job title: not yet available</div>
           )}
         </div>
         <SbSection>Active income types</SbSection>
         {INCOME_TYPES.map(it => (
           <div key={it.id} className={`inc-toggle${incomeTypes.has(it.id) ? " on" : ""}`}
             onClick={() => dispatch({ type:"TOGGLE_INCOME", payload:it.id })}>
-            <div className="toggle-box">{incomeTypes.has(it.id) ? "✓" : ""}</div>
+            <div className="toggle-box">{incomeTypes.has(it.id) ? "?" : ""}</div>
             <span>{it.label}</span>
             <span className="inc-code">{it.code}</span>
           </div>
@@ -1084,7 +1061,7 @@ function Sidebar({ state, dispatch, onExport }) {
           { id:"workpaper", label:"ITR Workpaper / Export" },
           { id:"xero",      label:"Xero Tax Integration" },
           { id:"formi",     label:"ATO Form I - Client Copy" },
-          { id:"outputs",   label:"Step 3 · Outputs Hub" },
+          { id:"outputs",   label:"Step 3 - Outputs Hub" },
         ].map(p => (
           <div key={p.id} className={`nav-item${panel === p.id ? " active" : ""}`}
             onClick={() => dispatch({ type:"SET_PANEL", payload:p.id })}>
@@ -1122,20 +1099,20 @@ function Sidebar({ state, dispatch, onExport }) {
             <SbSection>Archived clients</SbSection>
             <div className="archive-chips">
               {archivedClients.map((c, i) => (
-                <span key={i} className="archive-chip" title={`Saved: ${c.filename}\n${c.ts}`}>📁 {c.name}</span>
+                <span key={i} className="archive-chip" title={`Saved: ${c.filename}\n${c.ts}`}>? {c.name}</span>
               ))}
             </div>
           </>
         )}
       </div>
-      <div className="export-btn" onClick={onExport}>↓ Export accountant notes</div>
+      <div className="export-btn" onClick={onExport}>? Export accountant notes</div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  INTERVIEW PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function InterviewPanel({ state, dispatch }) {
   const { apiKey, chatMessages, incomeTypes } = state;
   const [input, setInput] = useState("");
@@ -1161,9 +1138,9 @@ Active income types: ${incomeList}
 - After each exchange append SUMMARY and RISKS blocks
 Format:
 SUMMARY
-• Item 1 Salary: $...
+? Item 1 Salary: $...
 RISKS
-→ [risk]
+? [risk]
 Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
     try {
       const msgs = [...chatMessages, { role:"user", content:clean }];
@@ -1172,14 +1149,14 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
       const sumMatch = reply.match(/SUMMARY\n([\s\S]*?)(?=\nRISKS|\n\n|$)/);
       if (sumMatch) {
         const rows = sumMatch[1].trim().split("\n").filter(l => l.trim()).map(l => ({
-          label: (l.replace(/^[•\-]\s*/, "").split(":")[0] || "").trim(),
+          label: (l.replace(/^[?\-]\s*/, "").split(":")[0] || "").trim(),
           value: ((l.split(":")[1] || "").trim()),
         }));
         dispatch({ type:"SET_SUMMARY", payload:rows });
       }
       const riskMatch = reply.match(/RISKS\n([\s\S]*?)(?=\n\n|$)/);
       if (riskMatch) {
-        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("→")).map(r => r.replace(/^→\s*/, ""));
+        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("?")).map(r => r.replace(/^?\s*/, ""));
         dispatch({ type:"SET_RISKS", payload:risks });
       }
     } catch(e) {
@@ -1195,7 +1172,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
         {isEmpty && (
           <>
             <div style={{ textAlign:"center", padding:"10px 0 4px" }}>
-              <div style={{ fontSize:22, marginBottom:6 }}>📋</div>
+              <div style={{ fontSize:22, marginBottom:6 }}>?</div>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}>Start a tax interview</div>
               <div style={{ fontSize:12, color:"var(--muted)" }}>Select income types, enter your API key, then pick a starting point or type your own question.</div>
             </div>
@@ -1225,7 +1202,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
         <div ref={bottomRef} />
       </div>
       <div className="notice warn" style={{ margin:"0 20px", borderRadius:"var(--rs)" }}>
-        <span>⚠</span><span>Do not enter TFN, full name, DOB, address, ABN, or bank details.</span>
+        <span>?</span><span>Do not enter TFN, full name, DOB, address, ABN, or bank details.</span>
       </div>
       <div className="chips-row" style={{ borderTop:"none", paddingTop:8 }}>
         {INTERVIEW_CHIPS.map((c, i) => <span key={i} className="chip" onClick={() => send(c.prompt)}>{c.label}</span>)}
@@ -1236,15 +1213,15 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
           onChange={e => { setInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,110)+"px"; }}
           onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
         />
-        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send →</button>
+        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send ?</button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ESS CARD
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function EssCard({ doc }) {
   const ex = doc.extracted;
   const txs = ex.essTransactions || [];
@@ -1254,9 +1231,9 @@ function EssCard({ doc }) {
   return (
     <div className="ext-panel">
       <div className="ext-hdr">
-        <span>🏢</span>
+        <span>?</span>
         <span style={{ flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.file.name}</span>
-        <span style={{ fontSize:10, fontFamily:"Courier New", color:"var(--hint)", flexShrink:0 }}>ESS · Item 12 · {txs.length} rows</span>
+        <span style={{ fontSize:10, fontFamily:"Courier New", color:"var(--hint)", flexShrink:0 }}>ESS ? Item 12 ? {txs.length} rows</span>
       </div>
       <div className="ext-body">
         <div className="field-grid" style={{ marginBottom:10 }}>
@@ -1265,11 +1242,11 @@ function EssCard({ doc }) {
           <div><div className="f-label">Box D - Upfront eligible</div><div className="f-val">{parseVal(ex.essBoxD) > 0 ? fmtAUD(parseVal(ex.essBoxD)) : "$0"}</div></div>
           <div><div className="f-label">Box E - Upfront no reduc.</div><div className="f-val">{parseVal(ex.essBoxE) > 0 ? fmtAUD(parseVal(ex.essBoxE)) : "$0"}</div></div>
           <div><div className="f-label">Box C - TFN withheld</div><div className="f-val">{fmtAUD(parseVal(ex.essTaxWithheld))}</div></div>
-          <div><div className="f-label">Row total vs Box F</div><div className="f-val" style={{ color: matches ? "var(--accent)" : "var(--danger)" }}>{fmtAUD(total)} {matches ? "✓" : "⚠"}</div></div>
+          <div><div className="f-label">Row total vs Box F</div><div className="f-val" style={{ color: matches ? "var(--accent)" : "var(--danger)" }}>{fmtAUD(total)} {matches ? "?" : "?"}</div></div>
         </div>
         {saleRows.length > 0 && (
           <div className="notice warn" style={{ marginBottom:8, fontSize:11 }}>
-            <span>⚠</span><span>{saleRows.length} sale-date event(s) - market value basis is sale price per ATO rules.</span>
+            <span>?</span><span>{saleRows.length} sale-date event(s) - market value basis is sale price per ATO rules.</span>
           </div>
         )}
         {txs.length > 0 && (
@@ -1306,9 +1283,9 @@ function EssCard({ doc }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  DOCUMENT EXTRACTION
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 async function extractDoc(doc, apiKey, selectedFY) {
   const dt = DOC_TYPES.find(d => d.id === doc.type) || DOC_TYPES[8];
   const isSpreadsheet = doc.file.name.match(/\.(xlsx|xls|csv)$/i);
@@ -1319,17 +1296,17 @@ async function extractDoc(doc, apiKey, selectedFY) {
   const fyEnd = getFYConfig(selectedFY || DEFAULT_FY).end;
   const system = `You are an Australian tax document parser for FY${fyLabel}. Return ONLY valid JSON, no markdown, no backticks, no preamble.
 FIELD RULES (all numbers: plain, no $ or commas):
-"income"→PAYG gross wages(Item 1). NULL for ESS. "taxWithheld"→PAYG tax withheld. "deductions"→total deductible. "rentalIncome"→gross rental. "rentalExpenses"→rental deductions. "capitalGains"→net capital gains.
-"essIncome"→ESS Box F deferral(Item 12). MUST NOT be null for ESS. "essTaxWithheld"→Box C TFN withheld. "essBoxD"→Box D upfront eligible. "essBoxE"→Box E upfront not eligible. "essEmployer"→employer name.
-"essTransactions"→ESS ONLY: EVERY row from detail table: {award,grantDate,taxingPointDate,taxingPointType,discountBasis,numInterests,taxableAuPct,taxableForeignPct,reportableDiscount,essItem,soldWithin30Days}. Extract ALL rows.
+"income"?PAYG gross wages(Item 1). NULL for ESS. "taxWithheld"?PAYG tax withheld. "deductions"?total deductible. "rentalIncome"?gross rental. "rentalExpenses"?rental deductions. "capitalGains"?net capital gains.
+"essIncome"?ESS Box F deferral(Item 12). MUST NOT be null for ESS. "essTaxWithheld"?Box C TFN withheld. "essBoxD"?Box D upfront eligible. "essBoxE"?Box E upfront not eligible. "essEmployer"?employer name.
+"essTransactions"?ESS ONLY: EVERY row from detail table: {award,grantDate,taxingPointDate,taxingPointType,discountBasis,numInterests,taxableAuPct,taxableForeignPct,reportableDiscount,essItem,soldWithin30Days}. Extract ALL rows.
 INCOME PROTECTION RULES - these are TWO DIFFERENT figures, never confuse them:
-"incProtectionPremium"→the PREMIUM PAID by the taxpayer to the insurer (D15 deduction, s.290). Look for words: "premium", "annual premium", "total premium paid", "amount paid". THIS IS A DEDUCTION.
-"incProtectionBenefit"→any BENEFIT/CLAIM PAYMENT received by the taxpayer from the insurer (assessable income, s.6-5). Look for words: "benefit paid", "income replacement benefit", "claim payment", "monthly benefit received". THIS IS INCOME. NULL if no benefits were received during the year.
+"incProtectionPremium"?the PREMIUM PAID by the taxpayer to the insurer (D15 deduction, s.290). Look for words: "premium", "annual premium", "total premium paid", "amount paid". THIS IS A DEDUCTION.
+"incProtectionBenefit"?any BENEFIT/CLAIM PAYMENT received by the taxpayer from the insurer (assessable income, s.6-5). Look for words: "benefit paid", "income replacement benefit", "claim payment", "monthly benefit received". THIS IS INCOME. NULL if no benefits were received during the year.
 If the document only shows premium details with no benefit payments listed, set incProtectionBenefit to null.
 DATE EXTRACTION - extract these for ALL document types:
-"documentDate"→the primary date of the document (receipt date, statement date, payment date, issue date). Format as YYYY-MM-DD. NULL if not found.
-"periodStart"→start of coverage/service period if stated (e.g. insurance policy period, rental period). Format as YYYY-MM-DD. NULL if not stated.
-"periodEnd"→end of coverage/service period if stated. Format as YYYY-MM-DD. NULL if not stated.
+"documentDate"?the primary date of the document (receipt date, statement date, payment date, issue date). Format as YYYY-MM-DD. NULL if not found.
+"periodStart"?start of coverage/service period if stated (e.g. insurance policy period, rental period). Format as YYYY-MM-DD. NULL if not stated.
+"periodEnd"?end of coverage/service period if stated. Format as YYYY-MM-DD. NULL if not stated.
 FY${fyLabel} period is ${fyStart} to ${fyEnd}. If documentDate falls outside this range, note it in the "notes" field.
 Return: {"docType":"${doc.type}","docLabel":"${dt.name}","fields":[{"label":"","value":"","ato_code":""}],"income":null,"taxWithheld":null,"deductions":null,"rentalIncome":null,"rentalExpenses":null,"capitalGains":null,"essIncome":null,"essTaxWithheld":null,"essBoxD":null,"essBoxE":null,"essEmployer":null,"essTransactions":[],"incProtectionPremium":null,"incProtectionBenefit":null,"documentDate":null,"periodStart":null,"periodEnd":null,"notes":""}`;
   let userContent;
@@ -1373,9 +1350,9 @@ Return: {"docType":"${doc.type}","docLabel":"${dt.name}","fields":[{"label":"","
   return JSON.parse(clean);
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  VAULT PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function VaultPanel({ state, dispatch, onDraft }) {
   const { apiKey, docs } = state;
   const [drag, setDrag] = useState(false);
@@ -1415,8 +1392,8 @@ function VaultPanel({ state, dispatch, onDraft }) {
   return (
     <div className="panel">
       <div className="vault-wrap">
-        <div className="notice warn"><span>⚠</span><span>Do not upload documents containing TFN, full name, or bank account numbers. Use anonymised copies only.</span></div>
-        <div className="notice info"><span>ℹ</span><span>Upload PDFs or images. Claude will extract all ATO-relevant figures automatically.</span></div>
+        <div className="notice warn"><span>?</span><span>Do not upload documents containing TFN, full name, or bank account numbers. Use anonymised copies only.</span></div>
+        <div className="notice info"><span>?</span><span>Upload PDFs or images. Claude will extract all ATO-relevant figures automatically.</span></div>
         <div className={`upload-zone${drag ? " drag" : ""}`}
           onClick={() => fileRef.current && fileRef.current.click()}
           onDragOver={e => { e.preventDefault(); setDrag(true); }}
@@ -1424,7 +1401,7 @@ function VaultPanel({ state, dispatch, onDraft }) {
           onDragLeave={() => setDrag(false)}>
           <input ref={fileRef} type="file" style={{ display:"none" }} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.csv"
             onChange={e => addFiles(e.target.files)} />
-          <div className="uz-icon">⬆</div>
+          <div className="uz-icon">?</div>
           <div className="uz-title">Drop files here or click to upload</div>
           <div className="uz-sub">PDF, PNG, JPG, XLSX, CSV - PAYG summaries, receipts, rental statements, brokerage reports, ESS statements, expense spreadsheets</div>
         </div>
@@ -1453,7 +1430,7 @@ function VaultPanel({ state, dispatch, onDraft }) {
                   <div className="doc-item-icon" style={{ background:dt.bg }}>{dt.icon}</div>
                   <div className="doc-item-info">
                     <div className="doc-item-name">{doc.file.name}</div>
-                    <div className="doc-item-meta">{dt.name} · {(doc.file.size/1024).toFixed(0)} KB</div>
+                    <div className="doc-item-meta">{dt.name} ? {(doc.file.size/1024).toFixed(0)} KB</div>
                   </div>
                   <select className="type-sel" value={doc.type}
                     onChange={e => dispatch({ type:"UPDATE_DOC", payload:{ id:doc.id, type:e.target.value } })}>
@@ -1468,16 +1445,16 @@ function VaultPanel({ state, dispatch, onDraft }) {
                       const { inPeriod, formatted } = checkInPeriod(dateToCheck, selFY);
                       const fyLbl = getFYLabel(selFY);
                       if (inPeriod === false) return (
-                        <span className="doc-status error" title={`Date ${formatted} is outside FY${fyLbl}`}>⚠ Out of period</span>
+                        <span className="doc-status error" title={`Date ${formatted} is outside FY${fyLbl}`}>? Out of period</span>
                       );
                       if (inPeriod === true) return (
-                        <span className="doc-status done" title={`Date ${formatted} confirmed in FY${fyLbl}`}>✓ In period</span>
+                        <span className="doc-status done" title={`Date ${formatted} confirmed in FY${fyLbl}`}>? In period</span>
                       );
                       return null;
                     } catch(e) { return null; }
                   })()}
                   <span className={`doc-status ${doc.status}`}>{statusLabel}</span>
-                  <span className="doc-remove" onClick={() => dispatch({ type:"REMOVE_DOC", payload:doc.id })}>✕</span>
+                  <span className="doc-remove" onClick={() => dispatch({ type:"REMOVE_DOC", payload:doc.id })}>?</span>
                 </div>
               );
             })}
@@ -1486,12 +1463,12 @@ function VaultPanel({ state, dispatch, onDraft }) {
         {hasDone && (
           <>
             <div className="cta-banner">
-              <div style={{ fontSize:26, flexShrink:0 }}>✦</div>
+              <div style={{ fontSize:26, flexShrink:0 }}>?</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>Documents extracted - ready to draft</div>
                 <div style={{ fontSize:11, color:"var(--muted)" }}>All documents have been extracted. Click to generate a complete FY{getFYLabel(state.selectedFY)} tax return draft.</div>
               </div>
-              <button className="tbtn primary" style={{ flexShrink:0, padding:"8px 16px" }} onClick={onDraft}>✦ Draft tax return</button>
+              <button className="tbtn primary" style={{ flexShrink:0, padding:"8px 16px" }} onClick={onDraft}>? Draft tax return</button>
             </div>
             <div className="vault-hdr"><div className="vault-hdr-title">Extracted data</div></div>
             {docs.filter(d => d.status === "done" && d.extracted && !d.extracted.error).map(doc => {
@@ -1526,9 +1503,9 @@ function VaultPanel({ state, dispatch, onDraft }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  TAX RETURN RENDERER
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function TaxReturnRenderer({ content }) {
   // Normalise line endings - API may return \r\n (Windows) which breaks regex
   const text = (content || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -1595,7 +1572,7 @@ function TaxReturnRenderer({ content }) {
   return (
     <div style={{ fontSize:12 }}>
       <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:6 }}>
-        <button className="tbtn" style={{ fontSize:11 }} onClick={copyTSV}>📋 Copy to spreadsheet</button>
+        <button className="tbtn" style={{ fontSize:11 }} onClick={copyTSV}>? Copy to spreadsheet</button>
       </div>
 
       {/* INCOME */}
@@ -1675,8 +1652,8 @@ function TaxReturnRenderer({ content }) {
                 : notesRaw.replace(/\.\s+(?=[A-Z])/g, ".\n").split("\n").filter(l => l.trim());
               return bullets.map((note, i) => (
                 <li key={i} style={{ display:"flex", gap:8, padding:"5px 0", fontSize:12, lineHeight:1.7, color:"var(--muted)", borderBottom:"0.5px solid var(--border)" }}>
-                  <span style={{ color:"var(--warn)", flexShrink:0, fontSize:11, marginTop:3 }}>⚑</span>
-                  <span>{note.replace(/^[-•*⚑►▸·]\s*/, "").trim()}</span>
+                  <span style={{ color:"var(--warn)", flexShrink:0, fontSize:11, marginTop:3 }}>?</span>
+                  <span>{note.replace(/^[-?*????]\s*/, "").trim()}</span>
                 </li>
               ));
             })()}
@@ -1687,9 +1664,9 @@ function TaxReturnRenderer({ content }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  DRAFTER PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function DrafterPanel({ state, dispatch }) {
   const { apiKey, drafterMessages, docs, chatMessages, clientProfile, selectedFY } = state;
   const [input, setInput] = useState("");
@@ -1730,7 +1707,7 @@ IP premium (D15 deduction): ${(t.ipPremium||0).toFixed(2)}`;
     const fyCfg = getFYConfig(selectedFY);
     const bracketStr = fyCfg.brackets.map((b,i,arr) => {
       const lo = i===0?0:arr[i-1][0]+1;
-      const hi = b[0]===Infinity?"∞":"$"+b[0].toLocaleString();
+      const hi = b[0]===Infinity?"?":"$"+b[0].toLocaleString();
       return `$${lo.toLocaleString()}-${hi}:${b[1]===0?"Nil":b[1]*100+"c"}${b[2]>0?" base$"+b[2]:""}`;
     }).join(" | ");
     const phiStr = fyCfg.phiTiersSingle.map((t,i)=>t+"/"+(fyCfg.phiTiersFamily[i])).join("|");
@@ -1741,21 +1718,21 @@ ${ctx}
 PROFILE: ${profileCtx}
 ${computedCtx}
 RATES FY${fyLabel}: ${bracketStr}
-Medicare ${fyCfg.medicareRate*100}%. Family lower=${fyCfg.medicareFamilyBase}+(${fyCfg.medicareFamilyPerChild}×deps).
-PHI clawback tiers(s/f):${phiStr} rates:${fyCfg.phiRates.join("/")} clawback=rebate×(1-entitled/${fyCfg.phiRates[0]}).
+Medicare ${fyCfg.medicareRate*100}%. Family lower=${fyCfg.medicareFamilyBase}+(${fyCfg.medicareFamilyPerChild}?deps).
+PHI clawback tiers(s/f):${phiStr} rates:${fyCfg.phiRates.join("/")} clawback=rebate?(1-entitled/${fyCfg.phiRates[0]}).
 LITO up to $${fyCfg.litoMax} phases $${fyCfg.litoPhase1[0]}-$${fyCfg.litoPhase2[1]}. LMITO:${lmitoStr}.
 ${fyCfg.notes}
 ESS TREATMENT:
-- Box F→Item 12 ordinary income s.83A-110. NO CGT discount on the discount itself.
+- Box F?Item 12 ordinary income s.83A-110. NO CGT discount on the discount itself.
 - SALE rows (soldWithin30Days): taxing point = sale date, assessable = sale proceeds minus costs.
 - VEST rows (held shares): assessable = market value at vesting. Cost base for future CGT = this assessed amount.
-- Box D→apply $1,000 concession per employer (s.83A-35). Box C→offsets tax payable.
+- Box D?apply $1,000 concession per employer (s.83A-35). Box C?offsets tax payable.
 - Flag in ##NOTES: number of held shares, their cost bases, and CGT implications on future disposal.
 RULES:
 - Exclude docs marked NO-EXCLUDE from deductions.
 - List each employer as separate Item 1 row.
 - Flag PAYG variation if ESS>$50k and withheld<70% gross tax.
-- INCOME PROTECTION: IBenefit(assessable-income) → include as Item 20 assessable income. IPremium(D15-deduction) → include as D15 deduction ONLY ONCE. Never count the same IP amount as both a general Deduction AND an IPremium - use IPremium field only.
+- INCOME PROTECTION: IBenefit(assessable-income) ? include as Item 20 assessable income. IPremium(D15-deduction) ? include as D15 deduction ONLY ONCE. Never count the same IP amount as both a general Deduction AND an IPremium - use IPremium field only.
 - USE PRE-COMPUTED TOTALS: the PRE-COMPUTED TOTALS block contains exact figures already calculated. Use these directly in ##SUMMARY - do not recalculate from raw document figures as this causes errors. The documents section is for context only; the computed totals are authoritative.
 OUTPUT - exactly these markers on their own lines, pipe-delimited, no $ in amounts:
 ##INCOME
@@ -1813,7 +1790,7 @@ One note per line.`;
               const ref = prompt("Client name for letter and estimate:", "Client");
               if (ref !== null) generateClientLetter(state, ref);
             }}>
-            📄 Generate client letter + estimate
+            ? Generate client letter + estimate
           </span>
         )}
       </div>
@@ -1823,22 +1800,22 @@ One note per line.`;
           onChange={e => { setInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,110)+"px"; }}
           onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
         />
-        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send →</button>
+        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send ?</button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  FY SELECTION MODAL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function FYModal({ state, dispatch }) {
   if (!state.showFYModal) return null;
   const currentCalendarYear = new Date().getFullYear();
   return (
     <div className="modal-overlay">
       <div className="modal" style={{ maxWidth:420 }}>
-        <div className="modal-title">📅 Select financial year</div>
+        <div className="modal-title">? Select financial year</div>
         <div className="modal-sub">Choose the tax year you are working on. You can change this at any time using the dropdown in the top bar.</div>
         <div style={{ display:"flex", flexDirection:"column", gap:8, margin:"8px 0 16px" }}>
           {FY_OPTIONS.map(fy => {
@@ -1860,13 +1837,13 @@ function FYModal({ state, dispatch }) {
                   </div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{cfg.notes}</div>
                 </div>
-                <span style={{ fontSize:18, color: isCurrent ? "var(--accent)" : "var(--hint)" }}>→</span>
+                <span style={{ fontSize:18, color: isCurrent ? "var(--accent)" : "var(--hint)" }}>?</span>
               </div>
             );
           })}
           {state.configStatus.loaded && state.configStatus.fromRemote && (
             <div style={{ fontSize:10, fontFamily:"Courier New", color:"var(--hint)", textAlign:"center", marginTop:4 }}>
-              Rates loaded from server · Last updated: {state.configStatus.lastUpdated || "unknown"}
+              Rates loaded from server ? Last updated: {state.configStatus.lastUpdated || "unknown"}
             </div>
           )}
         </div>
@@ -1875,9 +1852,9 @@ function FYModal({ state, dispatch }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ARCHIVE MODAL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function ArchiveModal({ state, dispatch }) {
   const [clientName, setClientName] = useState("");
   const inputRef = useRef(null);
@@ -1910,7 +1887,7 @@ function ArchiveModal({ state, dispatch }) {
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) dispatch({ type:"HIDE_ARCHIVE_MODAL" }); }}>
       <div className="modal">
-        <div className="modal-title">📁 Archive current client & start fresh</div>
+        <div className="modal-title">? Archive current client & start fresh</div>
         <div className="modal-sub">
           {hasData
             ? <span>The session will be downloaded as <strong>AusTax_[ClientName]_FY2425.txt</strong>. All data will then be cleared.</span>
@@ -1918,11 +1895,11 @@ function ArchiveModal({ state, dispatch }) {
         </div>
         {hasData && (
           <div className="modal-info">
-            ℹ What gets saved:<br />
-            · Full interview transcript<br />
-            · All ITR Preparation extracted document data<br />
-            · Return drafter conversation<br />
-            · Running summary & flagged risks
+            ? What gets saved:<br />
+            ? Full interview transcript<br />
+            ? All ITR Preparation extracted document data<br />
+            ? Return drafter conversation<br />
+            ? Running summary & flagged risks
           </div>
         )}
         <div className="modal-label">Client name or reference</div>
@@ -1933,7 +1910,7 @@ function ArchiveModal({ state, dispatch }) {
         <div className="modal-actions">
           <button className="tbtn" onClick={() => dispatch({ type:"HIDE_ARCHIVE_MODAL" })}>Cancel</button>
           <button className="tbtn primary" onClick={confirm}>
-            {hasData ? "📥 Save & clear session" : "✓ Clear & start fresh"}
+            {hasData ? "? Save & clear session" : "? Clear & start fresh"}
           </button>
         </div>
       </div>
@@ -1941,9 +1918,9 @@ function ArchiveModal({ state, dispatch }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ROOT APP
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function App() {
   const [state, dispatch] = useReducer(reducer, INITIAL);
 
@@ -1971,7 +1948,7 @@ function App() {
     downloadText(`austax-notes-fy${fyTag2}.txt`, buildArchiveText("Export", state));
   }, [state]);
 
-  const PANEL_TITLES = { interview:"Client Tax Interview", vault:"ITR Preparation", drafter:"Return Drafter", workpaper:"ITR Workpaper / Export", xero:"Xero Tax Integration", formi:"ATO Form I - Client Copy", outputs:"Step 3 · Outputs Hub" };
+  const PANEL_TITLES = { interview:"Client Tax Interview", vault:"ITR Preparation", drafter:"Return Drafter", workpaper:"ITR Workpaper / Export", xero:"Xero Tax Integration", formi:"ATO Form I - Client Copy", outputs:"Step 3 - Outputs Hub" };
 
   return (
     <>
@@ -1988,13 +1965,13 @@ function App() {
               onChange={e => dispatch({ type:"SET_FY", payload:e.target.value })}
               title="Financial year">
               {FY_OPTIONS.map(fy => (
-                <option key={fy} value={fy}>FY {getFYLabel(fy)}{fy === DEFAULT_FY ? " ✦" : ""}</option>
+                <option key={fy} value={fy}>FY {getFYLabel(fy)}{fy === DEFAULT_FY ? " ?" : ""}</option>
               ))}
             </select>
             <button className="tbtn" onClick={() => dispatch({ type:"SHOW_ARCHIVE_MODAL" })}>+ New client</button>
             {state.panel === "vault" && (
               <button className="tbtn primary" onClick={autoDraft} disabled={!state.docs.some(d => d.status === "done")}>
-                ✦ Draft tax return
+                ? Draft tax return
               </button>
             )}
           </div>
@@ -2003,7 +1980,7 @@ function App() {
             const cfg = getFYConfig(state.selectedFY);
             if (!cfg.confirmed) return (
               <div className="notice warn" style={{ margin:"0", borderRadius:0, borderLeft:"none", borderRight:"none", borderTop:"none", flexShrink:0 }}>
-                <span>⚠</span>
+                <span>?</span>
                 <span>
                   <strong>FY {getFYLabel(state.selectedFY)} - provisional rates.</strong> {cfg.provisionalNote || "Confirm with ATO before lodging."}
                 </span>
@@ -2014,14 +1991,14 @@ function App() {
           {/* Config staleness banner */}
           {state.configStatus.loaded && !state.configStatus.fromRemote && !state.configStatus.isLocal && (
             <div className="notice info" style={{ margin:"0", borderRadius:0, borderLeft:"none", borderRight:"none", borderTop:"none", flexShrink:0 }}>
-              <span>ℹ</span>
+              <span>?</span>
               <span>Using built-in tax rates - <strong>fy-config.json</strong> could not be loaded from server. Place the file in your web root to enable remote rate updates.</span>
             </div>
           )}
           {state.configStatus.fromRemote && state.configStatus.lastUpdated && (
             <div style={{ padding:"2px 20px", fontSize:10, fontFamily:"Courier New", color:"var(--hint)", background:"var(--surface2)", borderBottom:"0.5px solid var(--border)", flexShrink:0 }}>
-              Tax rates last updated: {state.configStatus.lastUpdated} · {FY_CONFIG_META.lastUpdatedBy || ""}
-              {FY_CONFIG_META.source ? ` · Source: ${FY_CONFIG_META.source}` : ""}
+              Tax rates last updated: {state.configStatus.lastUpdated} ? {FY_CONFIG_META.lastUpdatedBy || ""}
+              {FY_CONFIG_META.source ? ` ? Source: ${FY_CONFIG_META.source}` : ""}
             </div>
           )}
           {state.panel === "interview"  && <InterviewPanel  state={state} dispatch={dispatch} />}
@@ -2039,12 +2016,12 @@ function App() {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  TAXATION ESTIMATE HTML BUILDER
 //  Generates the human-readable appendix pages that match the MGB-style
 //  taxation estimate + deductions schedule format.
 //  Called by generateClientLetter (as token) and standalone preview.
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function buildTaxEstimateHTML(state, clientName) {
   const t = computeTotals(state.docs, state.clientProfile, state.selectedFY);
   const fyCfg = getFYConfig(state.selectedFY || DEFAULT_FY);
@@ -2126,7 +2103,7 @@ function buildTaxEstimateHTML(state, clientName) {
     },
   ];
 
-  // ── Shared print styles ──
+  // ?? Shared print styles ??
   const printStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -2178,7 +2155,7 @@ function buildTaxEstimateHTML(state, clientName) {
     .print-btn{display:block;margin:0 auto 24px;padding:10px 28px;font-size:12pt;background:#2d7a3a;color:#fff;border:none;border-radius:5px;cursor:pointer;}
   `;
 
-  // ── Page 1: Taxation Estimate ──
+  // ?? Page 1: Taxation Estimate ??
   const estimatePage = `
   <div class="page">
     <div class="firm-header">
@@ -2240,7 +2217,7 @@ function buildTaxEstimateHTML(state, clientName) {
     </div>
   </div>`;
 
-  // ── Page 2: Income Schedule ──
+  // ?? Page 2: Income Schedule ??
   const incomePage = incomeLines.length > 0 ? `
   <div class="page page-break">
     <div class="firm-header">
@@ -2284,7 +2261,7 @@ function buildTaxEstimateHTML(state, clientName) {
     </table>
   </div>` : "";
 
-  // ── Page 3: Deductions Schedule ──
+  // ?? Page 3: Deductions Schedule ??
   const deductPage = deductLines.length > 0 ? `
   <div class="page page-break">
     <div class="firm-header">
@@ -2333,10 +2310,10 @@ function buildTaxEstimateHTML(state, clientName) {
   return { estimatePage, incomePage, deductPage, printStyles };
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  STANDALONE ESTIMATE PREVIEW
 //  Opens just the estimate + schedules in a new window (no letter template needed)
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function openEstimatePreview(state, clientRef) {
   const clientName = clientRef || "Client";
   const { estimatePage, incomePage, deductPage, printStyles } = buildTaxEstimateHTML(state, clientName);
@@ -2346,7 +2323,7 @@ function openEstimatePreview(state, clientRef) {
     <meta charset="UTF-8"><title>Taxation Estimate - ${clientName}</title>
     <style>${printStyles}</style>
   </head><body>
-    <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+    <button class="print-btn no-print" onclick="window.print()">? Print / Save as PDF</button>
     ${estimatePage}
     ${incomePage}
     ${deductPage}
@@ -2354,9 +2331,9 @@ function openEstimatePreview(state, clientRef) {
   win.document.close();
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  CLIENT LETTER GENERATOR
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 async function generateClientLetter(state, clientRef) {
   const clientName = clientRef || (state.clientActive ? "Client" : "Client");
   const { estimatePage, incomePage, deductPage, printStyles } = buildTaxEstimateHTML(state, clientName);
@@ -2437,10 +2414,10 @@ async function generateClientLetter(state, clientRef) {
       <style>${printStyles}</style>
     </head><body>
       <div style="padding:16px 48px;font-family:Arial,sans-serif;font-size:11pt;background:#faeeda;border-bottom:2px solid #ba7517;color:#854f0b;" class="no-print">
-        ⚠ <strong>letter-template.html not found.</strong> Showing taxation estimate appendix only.
+        ? <strong>letter-template.html not found.</strong> Showing taxation estimate appendix only.
         Place <code>letter-template.html</code> in the same directory as <code>index.html</code> and add
         <code>{{TAXATION_ESTIMATE_APPENDIX}}</code> where you want the estimate to appear.
-        <button onclick="window.print()" style="margin-left:16px;padding:6px 16px;background:#2d7a3a;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / PDF</button>
+        <button onclick="window.print()" style="margin-left:16px;padding:6px 16px;background:#2d7a3a;color:#fff;border:none;border-radius:4px;cursor:pointer;">? Print / PDF</button>
       </div>
       ${estimatePage}
       ${incomePage}
@@ -2462,11 +2439,11 @@ async function generateClientLetter(state, clientRef) {
   win.document.close();
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  BUILD WORKPAPER DATA
 //  Maps computeTotals + raw extracted docs into every ATO ITR label
 //  Returns { sections: [...], fields: {...}, flags: [...], totals: {...} }
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
   const t = computeTotals(docs, clientProfile, selectedFY);
   const ov = overrides || {};
@@ -2534,7 +2511,7 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
     flags.push({ type:"info", msg:"Income protection: premium claimed as D15 deduction; benefit payments included as assessable income (Item 20/s.6-5)." });
 
   const sections = [
-    // ── SECTION A: INCOME ──
+    // ?? SECTION A: INCOME ??
     {
       id: "income", title: "INCOME", subtitle: "Items 1-24 ITAA 1997",
       rows: [
@@ -2569,7 +2546,7 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
           xeroField: "item12_boxF",
           detail: essRows.length > 0 ? essRows.map(r =>
             `${r.employer}: Box F ${fmtAUD(r.boxF)} | Box D ${fmtAUD(r.boxD)} | Box E ${fmtAUD(r.boxE)} | Box C (TFN WH) ${fmtAUD(r.boxC)}`
-          ).join(" ‖ ") : null,
+          ).join(" ? ") : null,
         },
         {
           code: "Item 15", label: "Net rent / rental income",
@@ -2608,7 +2585,7 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
         },
       ],
     },
-    // ── SECTION B: DEDUCTIONS ──
+    // ?? SECTION B: DEDUCTIONS ??
     {
       id: "deductions", title: "DEDUCTIONS", subtitle: "Items D1-D15 ITAA 1997",
       rows: [
@@ -2711,7 +2688,7 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
         },
       ],
     },
-    // ── SECTION C: TAX CALCULATION ──
+    // ?? SECTION C: TAX CALCULATION ??
     {
       id: "tax", title: "TAX CALCULATION", subtitle: "ATO schedule - FY" + fyLabel,
       rows: [
@@ -2753,13 +2730,13 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
         }] : []),
         {
           code: "NET", label: "Net tax payable",
-          sublabel: "Gross tax − offsets + Medicare ± PHI clawback",
+          sublabel: "Gross tax ? offsets + Medicare ? PHI clawback",
           value: -t.netTax, valueClass: t.netTax > 0 ? "neg" : "muted", bold: true,
           status: "auto", xeroField: "netTax",
         },
       ],
     },
-    // ── SECTION D: CREDITS & RESULT ──
+    // ?? SECTION D: CREDITS & RESULT ??
     {
       id: "credits", title: "TAX CREDITS & RESULT", subtitle: "PAYG withheld + ESS Box C",
       rows: [
@@ -2795,7 +2772,7 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
         },
       ],
     },
-    // ── SECTION E: INCOME TESTS & SPOUSE ──
+    // ?? SECTION E: INCOME TESTS & SPOUSE ??
     {
       id: "incometests", title: "INCOME TESTS & PROFILE", subtitle: "IT1-IT8 - affects offsets and Medicare",
       rows: [
@@ -2841,9 +2818,9 @@ function buildWorkpaperData(docs, clientProfile, selectedFY, overrides) {
   return { sections, flags, totals: t, fyLabel };
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  WORKPAPER EXPORT FUNCTIONS
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 
 function exportWorkpaperCSV(wpData, clientRef, selectedFY) {
   const { sections, totals, fyLabel } = wpData;
@@ -2894,7 +2871,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
     returnType: "individualIncomeTax",
     financialYearEnd: `${getFYConfig(selectedFY).endYear}-06-30`,
 
-    // ── INCOME ──
+    // ?? INCOME ??
     income: {
       item1_salaryWages: round2(vn("item1_income", t.paygIncome)),
       item1_taxWithheld: round2(vn("item1_withheld", t.taxWithheld)),
@@ -2913,7 +2890,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
       totalIncome: round2(vn("totalIncome", t.totalIncome)),
     },
 
-    // ── DEDUCTIONS ──
+    // ?? DEDUCTIONS ??
     deductions: {
       D1_carExpenses: round2(vn("D1", 0)),
       D2_travelExpenses: round2(vn("D2", 0)),
@@ -2929,7 +2906,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
       totalDeductions: round2(vn("totalDeductions", t.deductions + t.ipPremium)),
     },
 
-    // ── TAX CALCULATION ──
+    // ?? TAX CALCULATION ??
     taxCalculation: {
       taxableIncome: round2(t.taxableIncome),
       grossTax: round2(t.grossTax),
@@ -2940,7 +2917,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
       netTaxPayable: round2(t.netTax),
     },
 
-    // ── CREDITS ──
+    // ?? CREDITS ??
     credits: {
       paygWithholding: round2(t.taxWithheld),
       essTfnWithheld: round2(t.essTaxWH),
@@ -2949,7 +2926,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
       resultType: t.refund >= 0 ? "REFUND" : "PAYABLE",
     },
 
-    // ── INCOME TESTS ──
+    // ?? INCOME TESTS ??
     incomeTests: {
       IT1_reportableFringeBenefits: round2(vn("IT1", 0)),
       IT2_reportableEmployerSuperContributions: round2(vn("IT2", 0)),
@@ -2959,7 +2936,7 @@ function buildXeroJSON(wpData, overrides, clientProfile, selectedFY) {
       phiRebateReceived: round2(clientProfile?.phiRebateReceived || 0),
     },
 
-    // ── PRIVATE HEALTH INSURANCE ──
+    // ?? PRIVATE HEALTH INSURANCE ??
     privateHealthInsurance: {
       hasCover: clientProfile?.phiRebateReceived > 0,
       rebateReceived: round2(clientProfile?.phiRebateReceived || 0),
@@ -2985,9 +2962,9 @@ function copyXeroJSON(wpData, overrides, clientProfile, selectedFY) {
     .catch(() => alert("Copy failed - please use the download button instead."));
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  WORKPAPER PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function WorkpaperPanel({ state }) {
   const { docs, clientProfile, selectedFY } = state;
   const [overrides, setOverrides] = useState({});
@@ -3008,7 +2985,7 @@ function WorkpaperPanel({ state }) {
     return (
       <div className="panel">
         <div className="wp-wrap" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"var(--muted)", gap:12 }}>
-          <div style={{ fontSize:32 }}>📋</div>
+          <div style={{ fontSize:32 }}>?</div>
           <div style={{ fontSize:14, fontWeight:600 }}>No extracted documents yet</div>
           <div style={{ fontSize:12, maxWidth:340, textAlign:"center" }}>
             Go to <strong>ITR Preparation</strong>, upload and extract your client's documents, then return here to view the ATO-formatted workpaper and Xero export.
@@ -3074,7 +3051,7 @@ function WorkpaperPanel({ state }) {
           <div style={{ marginBottom:16 }}>
             {flags.map((f, i) => (
               <div key={i} className={`notice ${f.type}`} style={{ marginBottom:6 }}>
-                <span>{f.type === "warn" ? "⚠" : "ℹ"}</span>
+                <span>{f.type === "warn" ? "?" : "?"}</span>
                 <span style={{ fontSize:11 }}>{f.msg}</span>
               </div>
             ))}
@@ -3084,7 +3061,7 @@ function WorkpaperPanel({ state }) {
         {/* Override notice */}
         {Object.keys(overrides).length > 0 && (
           <div className="notice warn" style={{ marginBottom:12 }}>
-            <span>✎</span>
+            <span>?</span>
             <span style={{ fontSize:11 }}>
               {Object.keys(overrides).length} field(s) manually overridden.
               Overrides are included in all exports.{" "}
@@ -3118,7 +3095,7 @@ function WorkpaperPanel({ state }) {
                         <td className="wp-desc">
                           <span style={row.bold ? { fontWeight:700 } : {}}>{row.label}</span>
                           {row.sublabel && <small>{row.sublabel}</small>}
-                          {row.detail && <small style={{ color:"var(--accent-t)" }}>▸ {row.detail}</small>}
+                          {row.detail && <small style={{ color:"var(--accent-t)" }}>? {row.detail}</small>}
                         </td>
                         <td className="wp-src">{row.src || ""}</td>
                         {row.isText
@@ -3148,7 +3125,7 @@ function WorkpaperPanel({ state }) {
                         <tr className="wp-notice-row">
                           <td />
                           <td colSpan={4} style={{ padding:"4px 10px", fontSize:11, color:"var(--warn-t)" }}>
-                            ⚑ {row.notice}
+                            ? {row.notice}
                           </td>
                         </tr>
                       )}
@@ -3176,34 +3153,34 @@ function WorkpaperPanel({ state }) {
       <div className="wp-export-bar">
         <button className="wp-export-btn xero"
           onClick={() => exportXeroJSON(wpData, overrides, clientProfile, selectedFY, clientRef)}>
-          ⬇ Xero JSON (integration)
+          ? Xero JSON (integration)
         </button>
         <button className="wp-export-btn primary"
           onClick={() => copyXeroJSON(wpData, overrides, clientProfile, selectedFY)}>
-          📋 Copy Xero JSON
+          ? Copy Xero JSON
         </button>
         <button className="wp-export-btn"
           onClick={() => exportWorkpaperCSV(wpData, clientRef, selectedFY)}>
-          ⬇ Workpaper CSV
+          ? Workpaper CSV
         </button>
         <button className="wp-export-btn"
           style={{ background:"#1a3a5c", borderColor:"#1a3a5c", color:"#fff" }}
           onClick={() => openEstimatePreview(state, clientRef || "Client")}>
-          📄 Preview estimate (print / PDF)
+          ? Preview estimate (print / PDF)
         </button>
         <div style={{ flex:1 }} />
         <div style={{ fontSize:10, fontFamily:"Courier New", color:"var(--hint)", alignSelf:"center" }}>
-          Xero JSON maps to Xero Tax API /returns fields · FY {fyLabel}
+          Xero JSON maps to Xero Tax API /returns fields ? FY {fyLabel}
         </div>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  XERO OAUTH 2.0 PKCE HELPERS
-// ─────────────────────────────────────────
-const XERO_CLIENT_ID   = "YOUR_XERO_CLIENT_ID";   // ← replace with your Xero app Client ID
+// ?????????????????????????????????????????
+const XERO_CLIENT_ID   = "YOUR_XERO_CLIENT_ID";   // ? replace with your Xero app Client ID
 const XERO_REDIRECT_URI = window.location.origin + window.location.pathname; // same page
 const XERO_SCOPES = "openid profile email accounting.transactions accounting.contacts offline_access";
 
@@ -3309,9 +3286,9 @@ async function xeroSubmitReturn(accessToken, tenantId, payload) {
   return data;
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  XERO PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function XeroPanel({ state, dispatch }) {
   const { docs, clientProfile, selectedFY, xero } = state;
   const [status, setStatus] = useState("idle"); // idle | connecting | fetching | submitting | done | error
@@ -3414,7 +3391,7 @@ function XeroPanel({ state, dispatch }) {
 
         {/* Header */}
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-          <div style={{ fontSize:28 }}>𝗫</div>
+          <div style={{ fontSize:28 }}>?</div>
           <div>
             <div style={{ fontSize:16, fontWeight:700 }}>Xero Tax Integration</div>
             <div style={{ fontSize:11, color:"var(--muted)" }}>Connect to Xero Tax, review field mapping, and submit the ITR directly.</div>
@@ -3441,7 +3418,7 @@ function XeroPanel({ state, dispatch }) {
         {/* Connection state */}
         {!xero.connected ? (
           <div className="xero-connect-box">
-            <div className="xero-logo">🔗</div>
+            <div className="xero-logo">?</div>
             <div className="xero-connect-title">Connect to Xero Tax</div>
             <div className="xero-connect-sub">
               Authorise this app to submit tax returns to Xero Tax on your behalf.
@@ -3451,7 +3428,7 @@ function XeroPanel({ state, dispatch }) {
               disabled={status === "connecting" || status === "fetching"}>
               {status === "connecting" ? <><Spinner />Authorising...</>
                : status === "fetching"   ? <><Spinner />Fetching organisations...</>
-               : "🔗 Connect to Xero"}
+               : "? Connect to Xero"}
             </button>
           </div>
         ) : (
@@ -3459,7 +3436,7 @@ function XeroPanel({ state, dispatch }) {
             {/* Connected header */}
             <div className="xero-connected-header">
               <div className="xero-org-badge">
-                ✓ Connected &nbsp;·&nbsp; {xero.orgName || "Unknown org"}
+                ? Connected &nbsp;?&nbsp; {xero.orgName || "Unknown org"}
               </div>
               <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                 {tenants.length > 1 && (
@@ -3479,14 +3456,14 @@ function XeroPanel({ state, dispatch }) {
             {/* Status messages */}
             {status === "done" && (
               <div className="xero-status-box success">
-                ✓ <strong>ITR submitted successfully to Xero Tax</strong><br/>
-                Submitted: {xero.lastSubmit} · Organisation: {xero.orgName}<br/>
+                ? <strong>ITR submitted successfully to Xero Tax</strong><br/>
+                Submitted: {xero.lastSubmit} ? Organisation: {xero.orgName}<br/>
                 <span style={{ fontSize:10 }}>Open Xero Tax to review and finalise the return before lodgement.</span>
               </div>
             )}
             {status === "error" && (
               <div className="xero-status-box error">
-                ✕ <strong>Submission failed:</strong> {errorMsg}<br/>
+                ? <strong>Submission failed:</strong> {errorMsg}<br/>
                 <span style={{ fontSize:10 }}>Check your Xero app permissions include <code>accounting.transactions</code> scope. For Xero Tax specifically, your app must be linked to a Xero Tax account.</span>
               </div>
             )}
@@ -3499,7 +3476,7 @@ function XeroPanel({ state, dispatch }) {
             {/* No docs warning */}
             {!hasDocs && (
               <div className="notice warn" style={{ marginBottom:16 }}>
-                <span>⚠</span>
+                <span>?</span>
                 <span>No extracted documents - go to <strong>ITR Preparation</strong> to upload and extract documents first, then return here to submit.</span>
               </div>
             )}
@@ -3541,18 +3518,18 @@ function XeroPanel({ state, dispatch }) {
                 <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
                   <button className="xero-btn submit" onClick={submitReturn}
                     disabled={status === "submitting"}>
-                    {status === "submitting" ? <><Spinner />Submitting...</> : "↗ Submit ITR to Xero Tax"}
+                    {status === "submitting" ? <><Spinner />Submitting...</> : "? Submit ITR to Xero Tax"}
                   </button>
                   <button className="xero-btn" style={{ background:"var(--surface2)", borderColor:"var(--border-strong)" }}
                     onClick={() => exportXeroJSON(wpData, overrides, clientProfile, selectedFY, clientRef)}>
-                    ⬇ Download Xero JSON
+                    ? Download Xero JSON
                   </button>
                   <span style={{ fontSize:10, color:"var(--hint)", fontFamily:"Courier New" }}>
-                    FY {fyLabel} · {xero.orgName} · {mappingRows.length} fields mapped
+                    FY {fyLabel} ? {xero.orgName} ? {mappingRows.length} fields mapped
                   </span>
                 </div>
                 <div style={{ marginTop:10, fontSize:10, color:"var(--hint)", lineHeight:1.6 }}>
-                  ⚠ Submitting creates a draft return in Xero Tax. You must review, complete, and lodge from within Xero Tax using your registered tax agent credentials. This tool does not lodge directly with the ATO.
+                  ? Submitting creates a draft return in Xero Tax. You must review, complete, and lodge from within Xero Tax using your registered tax agent credentials. This tool does not lodge directly with the ATO.
                 </div>
               </>
             )}
@@ -3563,10 +3540,10 @@ function XeroPanel({ state, dispatch }) {
   );
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  ATO FORM I BUILDER
 //  Opens a pixel-faithful Form I client copy in a new window
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function buildFormIHTML(state, clientName) {
   const t = computeTotals(state.docs, state.clientProfile, state.selectedFY);
   const cp = state.clientProfile || {};
@@ -3649,14 +3626,14 @@ function buildFormIHTML(state, clientName) {
     table.ess td{padding:3px 6px;border:0.5px solid #ddd;font-family:'Courier New',monospace;}
   `;
 
-  // ── Page 1: Cover + personal details + income ──
+  // ?? Page 1: Cover + personal details + income ??
   const page1 = `
   <div class="page">
     <div class="watermark">CLIENT COPY - NOT TO BE LODGED WITH THE ATO</div>
     <div class="content">
       <div class="page-hdr">
-        <span>Form I &nbsp;·&nbsp; <strong>Individual Tax Return ${returnYear}</strong></span>
-        <span>Page 01 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;·&nbsp; ${clientName.toUpperCase()} &nbsp;·&nbsp; Prepared ${dateStr}</span>
+        <span>Form I &nbsp;?&nbsp; <strong>Individual Tax Return ${returnYear}</strong></span>
+        <span>Page 01 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;?&nbsp; ${clientName.toUpperCase()} &nbsp;?&nbsp; Prepared ${dateStr}</span>
       </div>
 
       <div class="form-title">Individual Tax Return ${returnYear}</div>
@@ -3704,7 +3681,7 @@ function buildFormIHTML(state, clientName) {
       <div class="field-row">
         <span class="field-label">
           <strong>Item 1 - Salary or wages (${i+1})</strong>
-          <span class="sub">Employer: ${emp.name}${emp.abn ? ` · ABN ${emp.abn}` : ""} · Occupation: IT Manager - Other (code 135199)</span>
+          <span class="sub">Employer: ${emp.name}${emp.abn ? ` ? ABN ${emp.abn}` : ""} ? Occupation: IT Manager - Other (code 135199)</span>
         </span>
         <div class="box-wrap">
           <span class="box-id">Tax W/H</span><span class="box wh">${fmtD(emp.withheld)}</span>
@@ -3777,14 +3754,14 @@ function buildFormIHTML(state, clientName) {
     </div>
   </div>`;
 
-  // ── Page 2: Tax calculation + Medicare + offsets ──
+  // ?? Page 2: Tax calculation + Medicare + offsets ??
   const page2 = `
   <div class="page">
     <div class="watermark">CLIENT COPY - NOT TO BE LODGED WITH THE ATO</div>
     <div class="content">
       <div class="page-hdr">
-        <span>Form I &nbsp;·&nbsp; <strong>Individual Tax Return ${returnYear}</strong></span>
-        <span>Page 02 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;·&nbsp; ${clientName.toUpperCase()}</span>
+        <span>Form I &nbsp;?&nbsp; <strong>Individual Tax Return ${returnYear}</strong></span>
+        <span>Page 02 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;?&nbsp; ${clientName.toUpperCase()}</span>
       </div>
 
       <div class="section">Tax offsets</div>
@@ -3890,7 +3867,7 @@ function buildFormIHTML(state, clientName) {
 
       <div class="disclaimer">
         <strong>CLIENT COPY - THIS DOCUMENT MUST NOT BE LODGED WITH THE AUSTRALIAN TAXATION OFFICE.</strong><br/>
-        Prepared by ${FIRM_CONFIG.name} · ${FIRM_CONFIG.address}, ${FIRM_CONFIG.suburb} ${FIRM_CONFIG.statePc} · ABN ${FIRM_CONFIG.abn} · ${FIRM_CONFIG.phone}<br/>
+        Prepared by ${FIRM_CONFIG.name} ? ${FIRM_CONFIG.address}, ${FIRM_CONFIG.suburb} ${FIRM_CONFIG.statePc} ? ABN ${FIRM_CONFIG.abn} ? ${FIRM_CONFIG.phone}<br/>
         The return has been compiled from information supplied by the taxpayer. Accuracy depends on the details
         provided. The taxpayer is responsible for the contents of the return under the Income Tax Assessment Act.
         Retain this copy for a minimum of five years.
@@ -3898,14 +3875,14 @@ function buildFormIHTML(state, clientName) {
     </div>
   </div>`;
 
-  // ── Page 3: Deductions schedule ──
+  // ?? Page 3: Deductions schedule ??
   const deductionsSchedule = `
   <div class="page">
     <div class="watermark">CLIENT COPY - NOT TO BE LODGED WITH THE ATO</div>
     <div class="content">
       <div class="page-hdr">
-        <span>Form I &nbsp;·&nbsp; <strong>Deductions Schedule ${returnYear}</strong></span>
-        <span>Page 03 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;·&nbsp; ${clientName.toUpperCase()}</span>
+        <span>Form I &nbsp;?&nbsp; <strong>Deductions Schedule ${returnYear}</strong></span>
+        <span>Page 03 of ${essDocs.length > 0 ? "04" : "03"} &nbsp;?&nbsp; ${clientName.toUpperCase()}</span>
       </div>
 
       ${deductItems.map(d => `
@@ -3922,19 +3899,19 @@ function buildFormIHTML(state, clientName) {
 
       <div class="disclaimer">
         Entitlement to deductions is dependent on the taxpayer retaining substantiating records.
-        Prepared by ${FIRM_CONFIG.name} · ABN ${FIRM_CONFIG.abn} · ${dateStr}
+        Prepared by ${FIRM_CONFIG.name} ? ABN ${FIRM_CONFIG.abn} ? ${dateStr}
       </div>
     </div>
   </div>`;
 
-  // ── Page 4 (if ESS): ESS Schedule - Item 12 ──
+  // ?? Page 4 (if ESS): ESS Schedule - Item 12 ??
   const essSchedule = essDocs.length > 0 ? `
   <div class="page">
     <div class="watermark">CLIENT COPY - NOT TO BE LODGED WITH THE ATO</div>
     <div class="content">
       <div class="page-hdr">
-        <span>Form I &nbsp;·&nbsp; <strong>Employee Share Scheme Schedule ${returnYear}</strong></span>
-        <span>Page 04 of 04 &nbsp;·&nbsp; ${clientName.toUpperCase()}</span>
+        <span>Form I &nbsp;?&nbsp; <strong>Employee Share Scheme Schedule ${returnYear}</strong></span>
+        <span>Page 04 of 04 &nbsp;?&nbsp; ${clientName.toUpperCase()}</span>
       </div>
 
       <div class="section">Item 12 - Employee Share Scheme</div>
@@ -3991,7 +3968,7 @@ function openFormI(state, clientName) {
     <title>ATO Form I - ${name} - Individual Tax Return ${getFYConfig(state.selectedFY||DEFAULT_FY).endYear}</title>
     <style>${css}</style>
   </head><body>
-    <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+    <button class="print-btn no-print" onclick="window.print()">? Print / Save as PDF</button>
     ${page1}
     ${page2}
     ${deductionsSchedule}
@@ -4000,9 +3977,9 @@ function openFormI(state, clientName) {
   win.document.close();
 }
 
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  FORM I PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function FormIPanel({ state }) {
   const { docs, clientProfile, selectedFY } = state;
   const [clientRef, setClientRef] = useState("");
@@ -4029,14 +4006,14 @@ function FormIPanel({ state }) {
             <button className="tbtn primary"
               disabled={!hasDocs}
               onClick={() => openFormI(state, clientRef || "Client")}>
-              📄 Open Form I
+              ? Open Form I
             </button>
           </div>
         </div>
 
         {!hasDocs ? (
           <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--hint)" }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>📋</div>
+            <div style={{ fontSize:32, marginBottom:12 }}>?</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:6 }}>No extracted documents</div>
             <div style={{ fontSize:12 }}>Upload and extract documents in <strong>ITR Preparation</strong> first.</div>
           </div>
@@ -4065,8 +4042,8 @@ function FormIPanel({ state }) {
             <div style={{ marginBottom:16 }}>
               <div style={{ fontSize:11, fontWeight:600, color:"var(--muted)", marginBottom:8, fontFamily:"Courier New" }}>FORM STRUCTURE</div>
               {[
-                { page:"Page 1", title:"Taxpayer details · Income items (Item 1, 2, 15, 18, 20) · Deductions summary" },
-                { page:"Page 2", title:"Tax offsets (T1, T2) · Medicare levy (M1, M2) · Income tests · PAYG credits · Result" },
+                { page:"Page 1", title:"Taxpayer details ? Income items (Item 1, 2, 15, 18, 20) ? Deductions summary" },
+                { page:"Page 2", title:"Tax offsets (T1, T2) ? Medicare levy (M1, M2) ? Income tests ? PAYG credits ? Result" },
                 { page:"Page 3", title:"Deductions schedule (D3, D5, D9, D10, D15)" },
                 ...(state.docs.some(d=>d.type==="ess"&&d.status==="done") ? [{ page:"Page 4", title:"Employee Share Scheme schedule - Item 12 (Box D, E, F, C) with transaction detail" }] : []),
               ].map((p,i) => (
@@ -4078,10 +4055,10 @@ function FormIPanel({ state }) {
             </div>
 
             <div className="notice info">
-              <span>ℹ</span>
+              <span>?</span>
               <span style={{ fontSize:11 }}>
                 Enter the client's full name above, then click <strong>Open Form I</strong> to generate the printable form in a new window.
-                Use your browser's Print (⌘P / Ctrl+P) → Save as PDF to produce the client copy document.
+                Use your browser's Print (?P / Ctrl+P) ? Save as PDF to produce the client copy document.
               </span>
             </div>
           </>
@@ -4092,280 +4069,144 @@ function FormIPanel({ state }) {
 }
 
 
-
-// ─────────────────────────────────────────
-//  ATO JOB TITLE LOOKUP - PLACEHOLDER
-//  When ATO SBR2 API access is configured, replace this function body.
-//  Requirements: Tax Agent number + myGovID Standard/Strong + ATO software developer registration.
-//  Endpoint: ATO SBR2 gateway - Individual.TaxReturn.JobTitle (or equivalent prefill service)
-//  Returns: { jobTitle: string, anzsicCode: string, employerAbn: string } or null
-// ─────────────────────────────────────────
-async function fetchATOJobTitle(tfn, fy) {
-  // ── FUTURE ATO API INTEGRATION ──
-  // When ATO credentials are configured, this function should:
-  // 1. Authenticate via ATO digital identity (myGovID)
-  // 2. Call the ATO prefill service to retrieve employment data for the given TFN and FY
-  // 3. Return { jobTitle, anzsicCode, employerName, employerAbn }
-  //
-  // Example endpoint (subject to ATO SBR2 specification):
-  // POST https://api.ato.gov.au/sbr2/prefill/individual
-  // Headers: { Authorization: "Bearer <ato_token>", "x-ato-taxagent": "<agent_number>" }
-  // Body: { tfn, financialYear: fy }
-  //
-  // For now, return null to indicate not yet available.
-  console.log("[ATO] Job title lookup not yet configured - ATO SBR2 credentials required.");
-  return null;
-}
-
-// ─────────────────────────────────────────
-//  EMPLOYER INDUSTRY INFERENCE
-//  Derives likely occupation/industry from employer name extracted from PAYG docs.
-//  Used as primary signal when ATO job title is not available.
-//  Cross-references ATO occupation-specific deduction guides.
-// ─────────────────────────────────────────
-function inferEmployerContext(docs) {
-  const done = docs.filter(d => d.status === "done" && d.extracted && !d.extracted.error);
-  const paygDocs = done.filter(d => d.type === "payg");
-  if (!paygDocs.length) return null;
-
-  const employers = paygDocs.map(d => {
-    const ex = d.extracted;
-    const empField = (ex.fields || []).find(f => /employer/i.test(f.label));
-    const empName = empField ? empField.value : (ex.fields?.[0]?.value || "");
-    const abnField = (ex.fields || []).find(f => /abn/i.test(f.label));
-    return { name: empName, abn: abnField ? abnField.value : null, income: parseVal(ex.income) };
-  }).filter(e => e.name);
-
-  return employers.length ? employers : null;
-}
-
-// ─────────────────────────────────────────
-//  DEDUCTION LEGITIMACY CHECKER
-//  Sends employer name(s), stated occupation, claimed deductions, and ATO job title
-//  (when available) to Claude for cross-reference against ATO occupation-specific guides.
-//  Returns structured legitimacy assessment per deduction item.
-// ─────────────────────────────────────────
-async function checkDeductionLegitimacy(apiKey, state, wpData) {
-  const { docs, clientProfile, selectedFY } = state;
-  const t = wpData.totals;
-  const fy = getFYLabel(selectedFY);
-
-  // Gather employer context from PAYG docs
-  const employers = inferEmployerContext(docs);
-  const employerStr = employers
-    ? employers.map(e => `${e.name}${e.abn ? " (ABN: "+e.abn+")" : ""} - income $${e.income.toLocaleString("en-AU")}`).join(" | ")
-    : "No PAYG employer extracted";
-
-  // Gather all claimed deductions
-  const done = docs.filter(d => d.status === "done" && d.extracted && !d.extracted.error);
-  const claimedDeductions = [];
-  done.filter(d => d.type !== "ess").forEach(d => {
-    const ex = d.extracted;
-    (ex.fields || []).filter(f => f.ato_code && /^D/i.test(f.ato_code) && parseVal(f.value) > 0).forEach(f => {
-      claimedDeductions.push({ code: f.ato_code, label: f.label, amount: parseVal(f.value), source: d.file.name });
-    });
-  });
-  if (t.ipPremium > 0) claimedDeductions.push({ code:"D15", label:"Income protection insurance premium", amount: t.ipPremium, source:"insurance doc" });
-  if (t.deductions > 0 && !claimedDeductions.length) claimedDeductions.push({ code:"D5", label:"Other work-related expenses", amount: t.deductions, source:"receipts" });
-
-  if (!claimedDeductions.length) return [];
-
-  // ATO job title - from API if available, otherwise stated occupation
-  const atoTitle = clientProfile.atoJobTitle;
-  const statedOccupation = clientProfile.occupation || "not stated";
-  const occupationContext = atoTitle
-    ? `ATO-confirmed job title: "${atoTitle}" (from ATO prefill service)`
-    : `Stated occupation: "${statedOccupation}" (manually entered - ATO confirmation not yet available)`;
-
-  const system = `You are an expert Australian tax compliance reviewer. Analyse each claimed deduction against ATO occupation-specific deduction rules and s.8-1 ITAA 1997.
-Return ONLY a JSON array - no markdown, no backticks. Each item:
-{
-  "code": "D1",
-  "label": "description",
-  "amount": 1234.56,
-  "verdict": "accepted|query|rejected",
-  "confidence": "high|medium|low",
-  "reason": "brief explanation referencing ATO rules",
-  "ato_reference": "s.8-1 ITAA 1997 or specific ATO guide",
-  "action": "what the accountant should do or verify"
-}
-verdict "accepted" = clearly legitimate for this employer/occupation.
-verdict "query" = possibly legitimate but needs verification or documentation.
-verdict "rejected" = not deductible for this occupation/employer type per ATO rules.
-Be specific - reference the actual ATO occupation guide where relevant (e.g. "ATO Nurse and midwife guide", "ATO Office worker guide").`;
-
-  const prompt = `FY${fy} deduction legitimacy check.
-
-EMPLOYER (from PAYG extraction - this is what the ATO already knows via Single Touch Payroll):
-${employerStr}
-
-${occupationContext}
-
-CLAIMED DEDUCTIONS:
-${claimedDeductions.map((d,i) => `${i+1}. ${d.code} - ${d.label}: $${d.amount.toFixed(2)} (source: ${d.source})`).join("
-")}
-
-For each deduction:
-1. Infer the likely industry/sector from the employer name (e.g. "NSW Department of Education" = education sector, "St Vincent's Hospital" = healthcare)
-2. Cross-reference against ATO occupation-specific deduction rules for that sector
-3. Flag any deduction that is inconsistent with the employer type or where the ATO typically requires specific evidence
-4. Note where the stated occupation conflicts with what the employer name suggests`;
-
-  const raw = await callClaude(apiKey, { system, messages:[{ role:"user", content:prompt }], maxTokens:1200 });
-  try {
-    return JSON.parse(raw.replace(/```json|```/g, "").trim());
-  } catch(e) {
-    return [{ code:"?", label:"Parse error", amount:0, verdict:"query", confidence:"low",
-      reason:"Legitimacy check could not be parsed - review manually.", ato_reference:"s.8-1 ITAA 1997", action:"Manual review required" }];
-  }
-}
-
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 //  OUTPUTS XLSX EXPORT
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function exportOutputsXLSX(wpData, exceptions, clientRef, selectedFY, deductCheck) {
   const wb = XLSX.utils.book_new();
   const fy = getFYLabel(selectedFY);
   const now = new Date().toLocaleString("en-AU");
   const ref = clientRef || "Client";
   const t = wpData.totals;
-
-  // Sheet 1: Workpaper
   const wpRows = [
-    ["GREENGRAPH Tax Agent - ITR Workpaper", `Client: ${ref}`, `FY: ${fy}`, `Generated: ${now}`],
-    [],
+    ["GREENGRAPH Tax Agent - ITR Workpaper", "Client: "+ref, "FY: "+fy, "Generated: "+now],[],
     ["Section","ATO Code","Description","Sub-label","Amount ($)","Status","Source"],
   ];
-  (wpData.sections||[]).forEach(sec => {
-    sec.rows.forEach(r => {
-      const amt = r.isText ? r.value : (r.value != null && r.value !== 0 ? r.value : "");
+  (wpData.sections||[]).forEach(function(sec) {
+    sec.rows.forEach(function(r) {
+      var amt = r.isText ? r.value : (r.value != null && r.value !== 0 ? r.value : "");
       wpRows.push([sec.title, r.code, r.label, r.sublabel||"", amt, r.status, r.src||""]);
     });
   });
-  wpRows.push([],["KEY TOTALS"],
-    ["Taxable Income", t.taxableIncome],
-    ["Net Tax Payable", t.netTax],
-    ["Total Withheld", t.totalTaxWH],
-    ["Est. Refund / Payable", t.refund]
-  );
-  const ws1 = XLSX.utils.aoa_to_sheet(wpRows);
+  wpRows.push([],["KEY TOTALS"],["Taxable Income",t.taxableIncome],["Net Tax Payable",t.netTax],["Total Withheld",t.totalTaxWH],["Est. Refund / Payable",t.refund]);
+  var ws1 = XLSX.utils.aoa_to_sheet(wpRows);
   ws1["!cols"] = [{wch:24},{wch:10},{wch:40},{wch:38},{wch:14},{wch:10},{wch:20}];
   XLSX.utils.book_append_sheet(wb, ws1, "ITR Workpaper");
-
-  // Sheet 2: Tax calculation
-  const calcRows = [
-    ["Tax Calculation Detail", `FY ${fy}`, `Client: ${ref}`], [],
-    ["Item","Amount ($)"],
-    ["Total assessable income", t.totalIncome],
-    ["Total deductions", -(t.deductions+(t.ipPremium||0))],
-    ["Taxable income", t.taxableIncome],[],
-    ["Gross income tax", -t.grossTax],
-    ["LITO", t.lito],
-    ["LMITO", t.lmito||0],
-    ["Medicare levy", -t.medicare],
-    ["PHI clawback", -(t.phiClawback||0)],
-    ["Net tax payable", -t.netTax],[],
-    ["PAYG withheld", t.taxWithheld],
-    ["ESS Box C withheld", t.essTaxWH||0],
-    ["Total credits", t.totalTaxWH],
-    ["Estimated refund / (payable)", t.refund],
-  ];
-  const ws2 = XLSX.utils.aoa_to_sheet(calcRows);
+  var calcRows = [["Tax Calculation Detail","FY "+fy,"Client: "+ref],[],["Item","Amount ($)"],
+    ["Total assessable income",t.totalIncome],["Total deductions",-(t.deductions+(t.ipPremium||0))],
+    ["Taxable income",t.taxableIncome],[],["Gross income tax",-t.grossTax],["LITO",t.lito],
+    ["LMITO",t.lmito||0],["Medicare levy",-t.medicare],["PHI clawback",-(t.phiClawback||0)],
+    ["Net tax payable",-t.netTax],[],["PAYG withheld",t.taxWithheld],
+    ["ESS Box C withheld",t.essTaxWH||0],["Total credits",t.totalTaxWH],["Estimated refund / (payable)",t.refund]];
+  var ws2 = XLSX.utils.aoa_to_sheet(calcRows);
   ws2["!cols"] = [{wch:38},{wch:16}];
   XLSX.utils.book_append_sheet(wb, ws2, "Tax Calculation");
-
-  // Sheet 3: Exceptions - one row per exception
-  const excRows = [
-    ["GREENGRAPH Tax Agent - Exceptions & Areas of Interest"],
-    [`Client: ${ref}`, `FY: ${fy}`, `Generated: ${now}`],[],
-    ["#","Severity","Category","Exception / Area of Interest","ATO Reference","Action Required"],
-  ];
-  (exceptions||[]).forEach((ex,i) => {
-    excRows.push([
-      i+1,
-      ex.type==="flag"?"REQUIRED":ex.type==="warn"?"WARNING":"INFO",
-      ex.category||"",
-      ex.msg,
-      ex.ref||"",
-      ex.action||"Review before lodgement",
-    ]);
+  var excRows = [["GREENGRAPH Tax Agent - Exceptions"],["Client: "+ref,"FY: "+fy,"Generated: "+now],[],
+    ["#","Severity","Category","Exception","ATO Reference","Action"]];
+  (exceptions||[]).forEach(function(ex,i) {
+    excRows.push([i+1, ex.type==="flag"?"REQUIRED":ex.type==="warn"?"WARNING":"INFO", ex.category||"", ex.msg, ex.ref||"", ex.action||"Review before lodgement"]);
   });
   if (!exceptions||!exceptions.length) excRows.push(["","","","No exceptions flagged."]);
-  const ws3 = XLSX.utils.aoa_to_sheet(excRows);
+  var ws3 = XLSX.utils.aoa_to_sheet(excRows);
   ws3["!cols"] = [{wch:4},{wch:10},{wch:16},{wch:60},{wch:18},{wch:30}];
   XLSX.utils.book_append_sheet(wb, ws3, "Exceptions");
-
-  // Sheet 4: Deduction legitimacy check
   if (deductCheck && deductCheck.length) {
-    const dRows = [
-      ["GREENGRAPH Tax Agent - Deduction Legitimacy Check"],
-      [`Client: ${ref}`, `FY: ${fy}`, `Generated: ${now}`],[],
-      ["ATO Code","Description","Amount ($)","Verdict","Confidence","Reason","ATO Reference","Action Required"],
-    ];
-    deductCheck.forEach(r => {
-      dRows.push([r.code, r.label, r.amount||0, (r.verdict||"").toUpperCase(), r.confidence||"", r.reason||"", r.ato_reference||"", r.action||""]);
+    var dRows = [["GREENGRAPH Tax Agent - Deduction Legitimacy Check"],["Client: "+ref,"FY: "+fy,"Generated: "+now],[],
+      ["ATO Code","Description","Amount ($)","Verdict","Confidence","Reason","ATO Reference","Action"]];
+    deductCheck.forEach(function(r) {
+      dRows.push([r.code,r.label,r.amount||0,(r.verdict||"").toUpperCase(),r.confidence||"",r.reason||"",r.ato_reference||"",r.action||""]);
     });
-    const ws4 = XLSX.utils.aoa_to_sheet(dRows);
+    var ws4 = XLSX.utils.aoa_to_sheet(dRows);
     ws4["!cols"] = [{wch:8},{wch:36},{wch:12},{wch:10},{wch:10},{wch:50},{wch:22},{wch:36}];
     XLSX.utils.book_append_sheet(wb, ws4, "Deduction Check");
   }
-
-  const fyTag = selectedFY.replace("-","");
-  XLSX.writeFile(wb, `ITR_Outputs_FY${fyTag}_${(ref).replace(/\s+/g,"_")}.xlsx`);
+  var fyTag = selectedFY.replace("-","");
+  XLSX.writeFile(wb, "ITR_Outputs_FY"+fyTag+"_"+(ref).replace(/\s+/g,"_")+".xlsx");
 }
 
-// ─────────────────────────────────────────
-//  OUTPUTS: HELPERS
-// ─────────────────────────────────────────
 function mergeExceptions(wpFlags, aiExceptions) {
-  const fromFlags = (wpFlags||[]).map(f => ({
-    type: f.type||"warn", category:"Calculated", msg:f.msg, ref:"", action:"Review before lodgement",
-  }));
-  return [...fromFlags, ...(aiExceptions||[]).filter(e=>e&&e.msg)];
+  var fromFlags = (wpFlags||[]).map(function(f) {
+    return { type:f.type||"warn", category:"Calculated", msg:f.msg, ref:"", action:"Review before lodgement" };
+  });
+  return fromFlags.concat((aiExceptions||[]).filter(function(e){return e&&e.msg;}));
 }
 
-// generateEmailDraft removed - Outputs Hub now uses generateClientLetter() directly
+function inferEmployerContext(docs) {
+  var done = docs.filter(function(d){return d.status==="done"&&d.extracted&&!d.extracted.error;});
+  var paygDocs = done.filter(function(d){return d.type==="payg";});
+  if (!paygDocs.length) return null;
+  var employers = paygDocs.map(function(d) {
+    var ex = d.extracted;
+    var empField = (ex.fields||[]).find(function(f){return /employer/i.test(f.label);});
+    var empName = empField ? empField.value : "";
+    var abnField = (ex.fields||[]).find(function(f){return /abn/i.test(f.label);});
+    return { name:empName, abn:abnField?abnField.value:null, income:parseVal(ex.income) };
+  }).filter(function(e){return e.name;});
+  return employers.length ? employers : null;
+}
 
 async function generateExceptions(apiKey, state, wpData) {
-  const t = wpData.totals;
-  const fy = getFYLabel(state.selectedFY);
-  const system = `You are an Australian tax review specialist. Analyse the return and identify exceptions, risks, and areas of interest. Return ONLY a JSON array, no markdown. Each item: {"type":"warn|info|flag","category":"string","msg":"string","ref":"ATO item/section","action":"string"}. "flag"=must fix before lodging. "warn"=review recommended. "info"=note. Max 10 items.`;
-  const prompt = `FY${fy} ITR review:
-Taxable income: ${fmtAUD(t.taxableIncome)} | Deductions: ${fmtAUD(t.deductions+(t.ipPremium||0))} | ${t.refund>=0?"Refund":"Payable"}: ${fmtAUD(Math.abs(t.refund))}
-ESS: ${fmtAUD(t.essBoxF+t.essBoxD+t.essBoxE)} | Rental net: ${fmtAUD(t.rentalIncome-t.rentalExp)} | Medicare: ${fmtAUD(t.medicare)}
-Interview risks: ${(state.interviewRisks||[]).join("; ")||"none recorded"}
-Docs: ${buildVaultContext(state.docs, state.chatMessages, state.selectedFY).slice(0,1000)}`;
-  const raw = await callClaude(apiKey, { system, messages:[{role:"user",content:prompt}], maxTokens:700 });
+  var t = wpData.totals;
+  var fy = getFYLabel(state.selectedFY);
+  var system = "You are an Australian tax review specialist. Analyse the return and identify exceptions, risks, and areas of interest. Return ONLY a JSON array, no markdown. Each item: {\"type\":\"warn|info|flag\",\"category\":\"string\",\"msg\":\"string\",\"ref\":\"ATO item/section\",\"action\":\"string\"}. flag=must fix before lodging. warn=review recommended. info=note. Max 10 items.";
+  var prompt = "FY"+fy+" ITR review:\nTaxable income: "+fmtAUD(t.taxableIncome)+" | Deductions: "+fmtAUD(t.deductions+(t.ipPremium||0))+" | "+(t.refund>=0?"Refund":"Payable")+": "+fmtAUD(Math.abs(t.refund))+"\nESS: "+fmtAUD(t.essBoxF+t.essBoxD+t.essBoxE)+" | Rental net: "+fmtAUD(t.rentalIncome-t.rentalExp)+" | Medicare: "+fmtAUD(t.medicare)+"\nInterview risks: "+((state.interviewRisks||[]).join("; ")||"none recorded")+"\nDocs: "+buildVaultContext(state.docs, state.chatMessages, state.selectedFY).slice(0,1000);
+  var raw = await callClaude(apiKey, { system:system, messages:[{role:"user",content:prompt}], maxTokens:700 });
   try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
   catch(e) { return [{type:"info",category:"Parse",msg:"Exceptions could not be parsed - review manually.",ref:"",action:"Manual review"}]; }
 }
 
-function buildOutputsReviewContext(state, wpData, emailDraft, exceptions) {
-  if (!wpData) return "No outputs generated yet.";
-  const t = wpData.totals;
-  const fy = getFYLabel(state.selectedFY);
-  const fmt = v => v > 0 ? fmtAUD(v) : "-";
-  return `You are AusTax Agent - Outputs Review mode. FY${fy}.
-ITR SUMMARY: Income ${fmt(t.totalIncome)} | Deductions ${fmt(t.deductions+(t.ipPremium||0))} | Taxable ${fmt(t.taxableIncome)} | Gross tax ${fmt(t.grossTax)} | LITO ${fmt(t.lito)} | Medicare ${fmt(t.medicare)} | Withheld ${fmt(t.totalTaxWH)} | ${t.refund>=0?"Refund":"Payable"} ${fmtAUD(Math.abs(t.refund))}
-EXCEPTIONS (${(exceptions||[]).length}): ${(exceptions||[]).map((e,i)=>`${i+1}.[${e.type?.toUpperCase()}] ${e.msg}`).join(" | ")||"None"}
-EMAIL (first 300 chars): ${(emailDraft||"").slice(0,300)}
-Answer questions about any output precisely. If a correction is implied, say which output is affected and the new value. Never ask for TFN, name, DOB, or bank details.`;
+async function checkDeductionLegitimacy(apiKey, state, wpData) {
+  var t = wpData.totals;
+  var fy = getFYLabel(state.selectedFY);
+  var employers = inferEmployerContext(state.docs);
+  var employerStr = employers
+    ? employers.map(function(e){return e.name+(e.abn?" (ABN: "+e.abn+")":"")+" - income $"+e.income.toLocaleString("en-AU");}).join(" | ")
+    : "No PAYG employer extracted";
+  var done = state.docs.filter(function(d){return d.status==="done"&&d.extracted&&!d.extracted.error;});
+  var claimedDeductions = [];
+  done.filter(function(d){return d.type!=="ess";}).forEach(function(d) {
+    var ex = d.extracted;
+    (ex.fields||[]).filter(function(f){return f.ato_code&&/^D/i.test(f.ato_code)&&parseVal(f.value)>0;}).forEach(function(f) {
+      claimedDeductions.push({code:f.ato_code, label:f.label, amount:parseVal(f.value), source:d.file.name});
+    });
+  });
+  if (t.ipPremium>0) claimedDeductions.push({code:"D15",label:"Income protection insurance premium",amount:t.ipPremium,source:"insurance doc"});
+  if (t.deductions>0&&!claimedDeductions.length) claimedDeductions.push({code:"D5",label:"Other work-related expenses",amount:t.deductions,source:"receipts"});
+  if (!claimedDeductions.length) return [];
+  var statedOccupation = state.clientProfile.occupation || "not stated";
+  var atoTitle = state.clientProfile.atoJobTitle;
+  var occupationContext = atoTitle
+    ? "ATO-confirmed job title: \""+atoTitle+"\" (from ATO prefill service)"
+    : "Stated occupation: \""+statedOccupation+"\" (manually entered - ATO confirmation not yet available)";
+  var system = "You are an expert Australian tax compliance reviewer. Analyse each claimed deduction against ATO occupation-specific deduction rules and s.8-1 ITAA 1997. Return ONLY a JSON array, no markdown. Each item: {\"code\":\"D1\",\"label\":\"description\",\"amount\":1234.56,\"verdict\":\"accepted|query|rejected\",\"confidence\":\"high|medium|low\",\"reason\":\"brief explanation\",\"ato_reference\":\"s.8-1 ITAA 1997 or ATO guide\",\"action\":\"what to do\"}";
+  var deductList = claimedDeductions.map(function(d,i){return (i+1)+". "+d.code+" - "+d.label+": $"+d.amount.toFixed(2)+" (source: "+d.source+")";}).join("\n");
+  var prompt = "FY"+fy+" deduction legitimacy check.\n\nEMPLOYER (from PAYG - what ATO knows via STP):\n"+employerStr+"\n\n"+occupationContext+"\n\nCLAIMED DEDUCTIONS:\n"+deductList+"\n\nFor each deduction: infer industry from employer name, cross-reference ATO occupation-specific rules, flag inconsistencies.";
+  var raw = await callClaude(apiKey, { system:system, messages:[{role:"user",content:prompt}], maxTokens:1200 });
+  try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
+  catch(e) { return [{code:"?",label:"Parse error",amount:0,verdict:"query",confidence:"low",reason:"Legitimacy check could not be parsed.",ato_reference:"s.8-1 ITAA 1997",action:"Manual review required"}]; }
 }
 
-// ─────────────────────────────────────────
+function buildOutputsReviewContext(state, wpData, exceptions) {
+  if (!wpData) return "No outputs generated yet.";
+  var t = wpData.totals;
+  var fy = getFYLabel(state.selectedFY);
+  var fmt = function(v){return v>0?fmtAUD(v):"--";};
+  return "You are AusTax Agent - Outputs Review mode. FY"+fy+".\nITR SUMMARY: Income "+fmt(t.totalIncome)+" | Deductions "+fmt(t.deductions+(t.ipPremium||0))+" | Taxable "+fmt(t.taxableIncome)+" | Gross tax "+fmt(t.grossTax)+" | LITO "+fmt(t.lito)+" | Medicare "+fmt(t.medicare)+" | Withheld "+fmt(t.totalTaxWH)+" | "+(t.refund>=0?"Refund":"Payable")+" "+fmtAUD(Math.abs(t.refund))+"\nEXCEPTIONS ("+((exceptions||[]).length)+"): "+((exceptions||[]).map(function(e,i){return (i+1)+". ["+((e.type||"").toUpperCase())+"] "+e.msg;}).join(" | ")||"None")+"\nAnswer questions about any output precisely. Never ask for TFN, name, DOB, or bank details.";
+}
+
+// ?????????????????????????????????????????
 //  OUTPUTS PANEL
-// ─────────────────────────────────────────
+// ?????????????????????????????????????????
 function OutputsPanel({ state, dispatch }) {
   const { apiKey, docs, clientProfile, selectedFY } = state;
   const hasDocs = docs.some(d => d.status === "done" && d.extracted && !d.extracted.error);
-
   const IDLE = { status:"idle", data:null };
   const [gen, setGen] = useState({ email:IDLE, xero:IDLE, form:IDLE, xlsx:IDLE, exc:IDLE, deduct:IDLE });
   const [generating, setGenerating] = useState(false);
   const [clientRef, setClientRef] = useState("");
   const [exceptions, setExceptions] = useState([]);
   const [wpData, setWpData] = useState(null);
-  const [collapsed, setCollapsed] = useState({ email:false, xero:true, form:false, xlsx:false, exc:false });
+  const [collapsed, setCollapsed] = useState({ email:false, xero:true, form:false, xlsx:false, exc:false, deduct:false });
   const [reviewMsgs, setReviewMsgs] = useState([]);
   const [reviewInput, setReviewInput] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
@@ -4373,32 +4214,20 @@ function OutputsPanel({ state, dispatch }) {
   const [approved, setApproved] = useState(false);
   const reviewBottomRef = useRef(null);
 
-  useEffect(() => { reviewBottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [reviewMsgs, reviewLoading]);
+  useEffect(() => { reviewBottomRef.current && reviewBottomRef.current.scrollIntoView({ behavior:"smooth" }); }, [reviewMsgs, reviewLoading]);
 
   const upd = (key, patch) => setGen(prev => ({ ...prev, [key]:{ ...prev[key], ...patch } }));
-  const allDone = ["email","xero","form","xlsx","exc","deduct"].every(k => gen[k]?.status === "done" || gen[k]?.status === "error");
+  const allDone = ["email","xero","form","xlsx","exc","deduct"].every(k => gen[k] && (gen[k].status === "done" || gen[k].status === "error"));
   const allVerified = Object.values(verifyChecks).every(Boolean);
 
   const generateAll = useCallback(async () => {
     if (!apiKey) { alert("Please enter your Anthropic API key."); return; }
     if (!hasDocs) { alert("No extracted documents - complete ITR Preparation first."); return; }
     setGenerating(true); setApproved(false);
-    setVerifyChecks({ email:false, xero:false, form:false, xlsx:false, exc:false });
+    setVerifyChecks({ email:false, xero:false, form:false, xlsx:false, exc:false, deduct:false });
     const wp = buildWorkpaperData(docs, clientProfile, selectedFY, {});
     setWpData(wp);
     setGen({ email:{status:"loading",data:null}, xero:{status:"loading",data:null}, form:{status:"loading",data:null}, xlsx:{status:"loading",data:null}, exc:{status:"loading",data:null}, deduct:{status:"loading",data:null} });
-    // Email letter is ready immediately (uses generateClientLetter popup - no API call)
-
-    // Exceptions from AI; letter uses existing generateClientLetter (popup, no API text needed)
-    const excRes = await Promise.allSettled([
-      generateExceptions(apiKey, state, wp),
-    ]);
-    const aiExc = excRes[0].status === "fulfilled" ? excRes[0].value : [];
-    const allExc = mergeExceptions(wp.flags, aiExc);
-    setExceptions(allExc);
-    const xeroJson = buildXeroJSON(wp, {}, clientProfile, selectedFY);
-
-    // Run deduction legitimacy check in parallel with exceptions (both need API)
     const [excRes, deductRes] = await Promise.allSettled([
       generateExceptions(apiKey, state, wp),
       checkDeductionLegitimacy(apiKey, state, wp),
@@ -4408,7 +4237,6 @@ function OutputsPanel({ state, dispatch }) {
     const deductCheck = deductRes.status === "fulfilled" ? deductRes.value : [];
     setExceptions(allExc);
     const xeroJson = buildXeroJSON(wp, {}, clientProfile, selectedFY);
-
     setGen({
       email:  { status:"done", data: clientRef || "Client" },
       xero:   { status:"done", data:xeroJson },
@@ -4418,7 +4246,7 @@ function OutputsPanel({ state, dispatch }) {
       deduct: { status:"done", data:deductCheck },
     });
     setGenerating(false);
-  }, [apiKey, hasDocs, docs, clientProfile, selectedFY, state]);
+  }, [apiKey, hasDocs, docs, clientProfile, selectedFY, state, clientRef]);
 
   const sendReview = useCallback(async (text) => {
     if (!apiKey || !text.trim() || !allDone) return;
@@ -4427,27 +4255,27 @@ function OutputsPanel({ state, dispatch }) {
     setReviewMsgs(prev => [...prev, {role:"user",content:clean}]);
     setReviewLoading(true);
     try {
-      const sys = buildOutputsReviewContext(state, wpData, gen.email.data, exceptions);
+      const sys = buildOutputsReviewContext(state, wpData, exceptions);
       const reply = await callClaude(apiKey, { system:sys, messages:[...reviewMsgs,{role:"user",content:clean}], maxTokens:600 });
       setReviewMsgs(prev => [...prev, {role:"assistant",content:reply}]);
     } catch(e) {
       setReviewMsgs(prev => [...prev, {role:"assistant",content:"Error: "+e.message}]);
     }
     setReviewLoading(false);
-  }, [apiKey, allDone, reviewMsgs, state, wpData, gen.email.data, exceptions]);
+  }, [apiKey, allDone, reviewMsgs, state, wpData, exceptions]);
 
-  const StatusDot = ({s}) => <span className={`op-status-dot ${s}`}/>;
+  const StatusDot = ({s}) => React.createElement("span", {className:"op-status-dot "+s});
   const Badge = ({s}) => {
     const L = {idle:"pending",loading:"generating...",done:"done",error:"error"};
-    return <span className={`op-badge ${s}`}>{L[s]||s}</span>;
+    return React.createElement("span", {className:"op-badge "+s}, L[s]||s);
   };
   const Card = ({id, icon, title, children, actions}) => (
     <div className="op-card">
       <div className="op-card-hdr" onClick={()=>setCollapsed(c=>({...c,[id]:!c[id]}))}>
-        <StatusDot s={gen[id]?.status||"idle"}/>
+        <StatusDot s={gen[id]?gen[id].status:"idle"}/>
         <span style={{flex:1}}>{icon} {title}</span>
-        <Badge s={gen[id]?.status||"idle"}/>
-        <span style={{fontSize:11,color:"var(--hint)",marginLeft:4}}>{collapsed[id]?"▸":"▾"}</span>
+        <Badge s={gen[id]?gen[id].status:"idle"}/>
+        <span style={{fontSize:11,color:"var(--hint)",marginLeft:4}}>{collapsed[id]?">" :"v"}</span>
       </div>
       {!collapsed[id] && (<>
         <div className="op-card-body">{children}</div>
@@ -4456,19 +4284,15 @@ function OutputsPanel({ state, dispatch }) {
     </div>
   );
 
-  const REVIEW_CHIPS = [
-    "Why is the LITO this amount?","Explain the ESS calculation",
-    "What deductions might be missing?","Is the Medicare levy correct?",
-    "Explain the refund figure","Which exceptions are most urgent?",
-  ];
+  const REVIEW_CHIPS = ["Why is the LITO this amount?","Explain the ESS calculation","What deductions might be missing?","Is the Medicare levy correct?","Explain the refund figure","Which exceptions are most urgent?"];
 
   if (!hasDocs) return (
     <div className="panel" style={{alignItems:"center",justifyContent:"center"}}>
       <div style={{textAlign:"center",padding:"40px 20px",color:"var(--hint)"}}>
-        <div style={{fontSize:32,marginBottom:12}}>📄</div>
+        <div style={{fontSize:32,marginBottom:12}}>&#128196;</div>
         <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>No extracted documents</div>
-        <div style={{fontSize:12}}>Complete <strong>ITR Preparation</strong> first, then return here to generate outputs.</div>
-        <button className="tbtn primary" style={{marginTop:16}} onClick={()=>dispatch({type:"SET_PANEL",payload:"vault"})}>→ Go to ITR Preparation</button>
+        <div style={{fontSize:12}}>Complete ITR Preparation first, then return here to generate outputs.</div>
+        <button className="tbtn primary" style={{marginTop:16}} onClick={()=>dispatch({type:"SET_PANEL",payload:"vault"})}>Go to ITR Preparation</button>
       </div>
     </div>
   );
@@ -4476,94 +4300,81 @@ function OutputsPanel({ state, dispatch }) {
   return (
     <div className="op-wrap">
       <div className="op-topbar">
-        <div className="op-topbar-title">Step 3 · Generate outputs</div>
+        <div className="op-topbar-title">Step 3 - Generate outputs</div>
         <span style={{fontSize:11,color:"var(--muted)"}}>Client ref:</span>
         <input value={clientRef} onChange={e=>setClientRef(e.target.value)} placeholder="e.g. Smith J"
           style={{padding:"4px 8px",fontSize:12,border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",background:"var(--bg)",color:"var(--text)",width:130}}/>
         <button className="tbtn primary" onClick={generateAll} disabled={generating||!hasDocs} style={{minWidth:180}}>
-          {generating ? <><Spinner/>Generating all 5...</> : "⚡ Generate all outputs"}
+          {generating ? <><Spinner/>Generating all...</> : "Generate all outputs"}
         </button>
         {allDone && (
-          <button className="tbtn" onClick={()=>{ if(gen.xlsx.data) exportOutputsXLSX(gen.xlsx.data.wp, gen.xlsx.data.exceptions, clientRef, selectedFY); }}>
-            ↓ Download XLSX
+          <button className="tbtn" onClick={()=>{ if(gen.xlsx&&gen.xlsx.data) exportOutputsXLSX(gen.xlsx.data.wp,gen.xlsx.data.exceptions,clientRef,selectedFY,gen.deduct&&gen.deduct.data?gen.deduct.data:[]); }}>
+            Download XLSX
           </button>
         )}
       </div>
-
       <div className="op-body">
         <div className="op-outputs">
           {generating && (
             <div className="op-gen-progress">
-              {[{id:"email",label:"Engagement letter"},{id:"exc",label:"Exceptions analysis"},{id:"deduct",label:"Deduction legitimacy check"},{id:"xero",label:"Xero JSON payload"},{id:"form",label:"ATO ITR calculations"},{id:"xlsx",label:"Calculations spreadsheet"}].map(item=>(
-                <div key={item.id} className="op-gen-item">
-                  {gen[item.id]?.status==="loading"?<Spinner/>:gen[item.id]?.status==="done"?<span style={{color:"var(--accent)",fontSize:13}}>✓</span>:<span style={{color:"var(--hint)"}}>○</span>}
-                  <span style={{color:gen[item.id]?.status==="done"?"var(--accent-t)":"var(--muted)"}}>{item.label}</span>
-                </div>
-              ))}
+              {[{id:"email",label:"Engagement letter"},{id:"exc",label:"Exceptions analysis"},{id:"deduct",label:"Deduction legitimacy check"},{id:"xero",label:"Xero JSON payload"},{id:"form",label:"ATO ITR calculations"},{id:"xlsx",label:"Calculations spreadsheet"}].map(function(item){
+                var s = gen[item.id]?gen[item.id].status:"idle";
+                return (
+                  <div key={item.id} className="op-gen-item">
+                    {s==="loading"?<Spinner/>:s==="done"?<span style={{color:"var(--accent)",fontSize:13}}>OK</span>:<span style={{color:"var(--hint)"}}>-</span>}
+                    <span style={{color:s==="done"?"var(--accent-t)":"var(--muted)"}}>{item.label}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {/* OUTPUT 1 */}
-          <Card id="email" icon="✉" title="Engagement letter - formal client communication"
-            actions={gen.email.status==="done" ? <>
+          <Card id="email" icon="[E]" title="Engagement letter - formal client communication"
+            actions={gen.email&&gen.email.status==="done" ? (
               <button className="tbtn primary" style={{fontSize:11}} onClick={()=>{
-                const ref = clientRef || "Client";
+                var ref = clientRef || "Client";
                 generateClientLetter(state, ref);
-              }}>📄 Open letter + estimate</button>
-            </> : null}>
-            {gen.email.status==="idle" && (
-              <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>
-                Formal client engagement letter with taxation estimate appendix - same output as <strong>Generate client letter + estimate</strong> in the Return Drafter. Opens in a new window for print / PDF. Full letter-template.html to be applied when received.
-              </div>
-            )}
-            {gen.email.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Preparing letter...</div>}
-            {gen.email.status==="done" && (
+              }}>Open letter + estimate</button>
+            ) : null}>
+            {(!gen.email||gen.email.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>Formal client engagement letter with taxation estimate appendix - same output as the Return Drafter letter button. Opens in a new window for print / PDF.</div>}
+            {gen.email&&gen.email.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Preparing letter...</div>}
+            {gen.email&&gen.email.status==="done" && (
               <div>
                 <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"var(--accent-l)",border:"0.5px solid var(--accent)",borderRadius:"var(--rs)",marginBottom:8}}>
-                  <span style={{fontSize:16}}>📄</span>
+                  <span style={{fontSize:16}}>&#128196;</span>
                   <div style={{flex:1}}>
                     <div style={{fontSize:12,fontWeight:600,color:"var(--accent-t)"}}>Formal engagement letter + taxation estimate</div>
-                    <div style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{FIRM_CONFIG.name} · {clientRef||"Client"} · FY {getFYLabel(selectedFY)}</div>
+                    <div style={{fontSize:11,color:"var(--muted)",marginTop:2}}>{FIRM_CONFIG.name} - {clientRef||"Client"} - FY {getFYLabel(selectedFY)}</div>
                   </div>
                 </div>
-                <div style={{fontSize:11,color:"var(--hint)"}}>
-                  Includes: cover letter with fee invoice · taxation estimate (Debits/Credits) · income schedule · deductions schedule.
-                  Opens in a new window - use <strong>Print / Save as PDF</strong> to produce the client copy.
-                </div>
-                {!window.location.href.startsWith("file://") && (
-                  <div style={{marginTop:6,fontSize:11,color:"var(--warn-t)",background:"var(--warn-l)",padding:"5px 9px",borderRadius:"var(--rs)",border:"0.5px solid var(--warn)"}}>
-                    ⚠ No letter-template.html found - will open the taxation estimate appendix only. Place letter-template.html in the same directory to enable the full letter.
-                  </div>
-                )}
+                <div style={{fontSize:11,color:"var(--hint)"}}>Includes: cover letter with fee invoice, taxation estimate, income schedule, deductions schedule. Opens in a new window.</div>
               </div>
             )}
           </Card>
 
-          {/* OUTPUT 2 */}
-          <Card id="xero" icon="🔗" title="Xero JSON - ATO lodgement payload"
-            actions={gen.xero.status==="done" ? <>
+          <Card id="xero" icon="[X]" title="Xero JSON - ATO lodgement payload"
+            actions={gen.xero&&gen.xero.status==="done" ? (<>
               <button className="tbtn" style={{fontSize:11}} onClick={()=>{
-                const blob=new Blob([JSON.stringify(gen.xero.data,null,2)],{type:"application/json"});
-                const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`Xero_ITR_FY${selectedFY.replace("-","")}_${(clientRef||"Client").replace(/\s+/g,"_")}.json`;a.click();
-              }}>↓ Download JSON</button>
-              <button className="tbtn" style={{fontSize:11}} onClick={()=>navigator.clipboard.writeText(JSON.stringify(gen.xero.data,null,2)).then(()=>alert("JSON copied"))}>📋 Copy</button>
-            </> : null}>
-            {gen.xero.status==="idle" && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>Xero Tax API-shaped JSON using buildXeroJSON() - maps all ATO SBR2 field IDs. Ready to POST to /returns endpoint.</div>}
-            {gen.xero.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Building Xero JSON payload...</div>}
-            {gen.xero.status==="done" && gen.xero.data && <div className="op-json-wrap">{JSON.stringify(gen.xero.data,null,2)}</div>}
+                var blob=new Blob([JSON.stringify(gen.xero.data,null,2)],{type:"application/json"});
+                var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Xero_ITR_FY"+selectedFY.replace("-","")+"_"+(clientRef||"Client").replace(/\s+/g,"_")+".json";a.click();
+              }}>Download JSON</button>
+              <button className="tbtn" style={{fontSize:11}} onClick={()=>navigator.clipboard.writeText(JSON.stringify(gen.xero.data,null,2)).then(()=>alert("JSON copied"))}>Copy</button>
+            </>) : null}>
+            {(!gen.xero||gen.xero.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>Xero Tax API-shaped JSON - maps all ATO SBR2 field IDs. Ready to POST to /returns endpoint.</div>}
+            {gen.xero&&gen.xero.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Building Xero JSON payload...</div>}
+            {gen.xero&&gen.xero.status==="done"&&gen.xero.data && <div className="op-json-wrap">{JSON.stringify(gen.xero.data,null,2)}</div>}
           </Card>
 
-          {/* OUTPUT 3 */}
-          <Card id="form" icon="📋" title="ATO completed template - ITR figures"
-            actions={gen.form.status==="done" ? <>
-              <button className="tbtn" style={{fontSize:11}} onClick={()=>dispatch({type:"SET_PANEL",payload:"formi"})}>→ Open full Form I</button>
-              <button className="tbtn" style={{fontSize:11}} onClick={()=>dispatch({type:"SET_PANEL",payload:"workpaper"})}>→ Open workpaper</button>
-            </> : null}>
-            {gen.form.status==="idle" && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>ATO Form I individual tax return - all calculated items, computed from extracted documents.</div>}
-            {gen.form.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Computing ITR figures...</div>}
-            {gen.form.status==="done" && wpData && (()=>{
+          <Card id="form" icon="[F]" title="ATO completed template - ITR figures"
+            actions={gen.form&&gen.form.status==="done" ? (<>
+              <button className="tbtn" style={{fontSize:11}} onClick={()=>dispatch({type:"SET_PANEL",payload:"formi"})}>Open full Form I</button>
+              <button className="tbtn" style={{fontSize:11}} onClick={()=>dispatch({type:"SET_PANEL",payload:"workpaper"})}>Open workpaper</button>
+            </>) : null}>
+            {(!gen.form||gen.form.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>ATO Form I individual tax return - all calculated items from extracted documents.</div>}
+            {gen.form&&gen.form.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Computing ITR figures...</div>}
+            {gen.form&&gen.form.status==="done"&&wpData && (()=>{
               const t=wpData.totals;
-              const fmt=v=>v>0?fmtAUD(v):"-"; const fmtN=v=>v>0?"-"+fmtAUD(v):"-";
+              const fmt=v=>v>0?fmtAUD(v):"--"; const fmtN=v=>v>0?"-"+fmtAUD(v):"--";
               const rows=[
                 {label:"Total assessable income",val:fmt(t.totalIncome),code:"Items 1-20",cls:"pos"},
                 {label:"Total deductions",val:fmtN(t.deductions+(t.ipPremium||0)),code:"D1-D15",cls:"neg"},
@@ -4594,48 +4405,46 @@ function OutputsPanel({ state, dispatch }) {
             })()}
           </Card>
 
-          {/* OUTPUT 4 */}
-          <Card id="xlsx" icon="📊" title="Calculations spreadsheet - XLSX workpaper + exceptions"
-            actions={gen.xlsx.status==="done" ? <>
-              <button className="tbtn primary" style={{fontSize:11}} onClick={()=>{ if(gen.xlsx.data) exportOutputsXLSX(gen.xlsx.data.wp,gen.xlsx.data.exceptions,clientRef,selectedFY,gen.deduct.data||[]); }}>↓ Download XLSX</button>
-            </> : null}>
-            {gen.xlsx.status==="idle" && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>3-tab XLSX: ITR Workpaper · Tax Calculation · Exceptions (one row per exception).</div>}
-            {gen.xlsx.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Building spreadsheet...</div>}
-            {gen.xlsx.status==="done" && (
+          <Card id="xlsx" icon="[S]" title="Calculations spreadsheet - XLSX workpaper + exceptions"
+            actions={gen.xlsx&&gen.xlsx.status==="done" ? (
+              <button className="tbtn primary" style={{fontSize:11}} onClick={()=>{ if(gen.xlsx.data) exportOutputsXLSX(gen.xlsx.data.wp,gen.xlsx.data.exceptions,clientRef,selectedFY,gen.deduct&&gen.deduct.data?gen.deduct.data:[]); }}>Download XLSX</button>
+            ) : null}>
+            {(!gen.xlsx||gen.xlsx.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>4-tab XLSX: ITR Workpaper, Tax Calculation, Exceptions, Deduction Check.</div>}
+            {gen.xlsx&&gen.xlsx.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Building spreadsheet...</div>}
+            {gen.xlsx&&gen.xlsx.status==="done" && (
               <div style={{fontSize:12,color:"var(--muted)"}}>
-                3-tab workbook ready:
+                4-tab workbook ready:
                 <div style={{marginTop:6,display:"flex",gap:8,flexWrap:"wrap"}}>
                   {["ITR Workpaper","Tax Calculation","Exceptions","Deduction Check"].map(tab=>(
                     <span key={tab} style={{padding:"2px 9px",background:"var(--accent-l)",border:"0.5px solid var(--accent)",borderRadius:20,fontSize:10,fontFamily:"Courier New",color:"var(--accent-t)"}}>{tab}</span>
                   ))}
                 </div>
-                <div style={{marginTop:6,fontSize:11,color:"var(--hint)"}}>Exceptions sheet: {exceptions.length} row{exceptions.length!==1?"s":""} - one per flagged item.</div>
+                <div style={{marginTop:6,fontSize:11,color:"var(--hint)"}}>Exceptions: {exceptions.length} row{exceptions.length!==1?"s":""} - one per flagged item.</div>
               </div>
             )}
           </Card>
 
-          {/* OUTPUT 5 */}
-          <Card id="exc" icon="⚑" title="Exceptions & areas of interest">
-            {gen.exc.status==="idle" && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>AI-reviewed exceptions, interview risks, out-of-period documents, missing items. Also appended to the XLSX.</div>}
-            {gen.exc.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Analysing return for exceptions...</div>}
-            {gen.exc.status==="done" && (exceptions.length===0
-              ? <div className="notice info"><span>ℹ</span><span>No exceptions flagged.</span></div>
-              : <div>{["flag","warn","info"].map(type=>{
-                  const items=exceptions.filter(e=>e.type===type);
+          <Card id="exc" icon="[!]" title="Exceptions and areas of interest">
+            {(!gen.exc||gen.exc.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>AI-reviewed exceptions, interview risks, out-of-period documents, missing items. Also in the XLSX.</div>}
+            {gen.exc&&gen.exc.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Analysing return for exceptions...</div>}
+            {gen.exc&&gen.exc.status==="done" && (exceptions.length===0
+              ? <div className="notice info"><span>i</span><span>No exceptions flagged.</span></div>
+              : <div>{["flag","warn","info"].map(function(type){
+                  const items=exceptions.filter(function(e){return e.type===type;});
                   if(!items.length) return null;
-                  const icons={flag:"🚨",warn:"⚠",info:"ℹ"};
+                  const icons={flag:"[!!]",warn:"[!]",info:"[i]"};
                   const lbls={flag:"Must resolve before lodging",warn:"Review recommended",info:"Notes"};
                   return (
                     <div key={type} style={{marginBottom:12}}>
                       <div style={{fontSize:10,fontFamily:"Courier New",color:type==="flag"?"var(--danger)":type==="warn"?"var(--warn-t)":"var(--info-t)",fontWeight:700,letterSpacing:".4px",textTransform:"uppercase",marginBottom:4}}>
                         {icons[type]} {lbls[type]}
                       </div>
-                      {items.map((ex,i)=>(
-                        <div key={i} className={`op-exc-item ${type}`}>
-                          <span className="op-exc-sev">{ex.type?.toUpperCase()}</span>
-                          <span className="op-exc-text">{ex.msg}<small>{[ex.category,ex.ref,ex.action].filter(Boolean).join(" · ")}</small></span>
+                      {items.map(function(ex,i){return (
+                        <div key={i} className={"op-exc-item "+type}>
+                          <span className="op-exc-sev">{(ex.type||"").toUpperCase()}</span>
+                          <span className="op-exc-text">{ex.msg}<small>{[ex.category,ex.ref,ex.action].filter(Boolean).join(" - ")}</small></span>
                         </div>
-                      ))}
+                      );})}
                     </div>
                   );
                 })}
@@ -4643,107 +4452,49 @@ function OutputsPanel({ state, dispatch }) {
             )}
           </Card>
 
-          {/* OUTPUT 6: Deduction legitimacy */}
-          <Card id="deduct" icon="🔍" title="Deduction legitimacy check - employer vs ATO rules">
-            {gen.deduct.status==="idle" && (
-              <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>
-                Cross-references each claimed deduction against ATO occupation-specific guides using the employer name from PAYG docs - the same signal the ATO uses via Single Touch Payroll. ATO job title lookup will slot in here when SBR2 credentials are configured.
-              </div>
-            )}
-            {gen.deduct.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Checking deductions against employer and occupation rules...</div>}
-            {gen.deduct.status==="done" && gen.deduct.data && (()=>{
+          <Card id="deduct" icon="[D]" title="Deduction legitimacy check - employer vs ATO rules">
+            {(!gen.deduct||gen.deduct.status==="idle") && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>Cross-references each claimed deduction against ATO occupation-specific guides using the employer name from PAYG docs - the same signal the ATO uses via Single Touch Payroll.</div>}
+            {gen.deduct&&gen.deduct.status==="loading" && <div style={{fontSize:12,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Checking deductions against employer and occupation rules...</div>}
+            {gen.deduct&&gen.deduct.status==="done"&&gen.deduct.data && (()=>{
               const checks = gen.deduct.data;
-              if (!checks.length) return <div className="notice info"><span>ℹ</span><span>No deductions to check.</span></div>;
+              if (!checks.length) return <div className="notice info"><span>i</span><span>No deductions to check.</span></div>;
               const verdictColour = { accepted:"var(--accent)", query:"var(--warn)", rejected:"var(--danger)" };
               const verdictBg = { accepted:"var(--accent-l)", query:"var(--warn-l)", rejected:"var(--danger-l)" };
-              const verdictIcon = { accepted:"✓", query:"?", rejected:"✗" };
-
-              // Employer context banner
-              const employers = inferEmployerContext(gen.form.data ? state.docs : []);
+              const verdictIcon = { accepted:"OK", query:"?", rejected:"X" };
+              const employers = inferEmployerContext(state.docs);
               const cp = state.clientProfile;
-
               return (
                 <div>
-                  {/* Employer / occupation context */}
                   <div style={{padding:"8px 10px",background:"var(--surface2)",border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",marginBottom:10,fontSize:11}}>
                     <div style={{fontFamily:"Courier New",fontSize:10,color:"var(--hint)",marginBottom:4,textTransform:"uppercase",letterSpacing:".4px"}}>Context used for this check</div>
                     <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-                      <div>
-                        <span style={{color:"var(--muted)"}}>Employer (STP): </span>
-                        <span style={{fontWeight:600}}>{employers ? employers.map(e=>e.name).join(", ") : "not extracted"}</span>
-                      </div>
-                      <div>
-                        <span style={{color:"var(--muted)"}}>Stated occupation: </span>
-                        <span style={{fontWeight:600}}>{cp.occupation || "not stated"}</span>
-                      </div>
-                      <div>
-                        <span style={{color:"var(--muted)"}}>ATO job title: </span>
-                        <span style={{fontWeight:600,color:cp.atoJobTitle?"var(--accent)":"var(--hint)"}}>
-                          {cp.atoJobTitle || "⚠ not available - ATO SBR2 pending"}
-                        </span>
-                      </div>
+                      <div><span style={{color:"var(--muted)"}}>Employer (STP): </span><span style={{fontWeight:600}}>{employers?employers.map(function(e){return e.name;}).join(", "):"not extracted"}</span></div>
+                      <div><span style={{color:"var(--muted)"}}>Stated occupation: </span><span style={{fontWeight:600}}>{cp.occupation||"not stated"}</span></div>
+                      <div><span style={{color:"var(--muted)"}}>ATO job title: </span><span style={{fontWeight:600,color:cp.atoJobTitle?"var(--accent)":"var(--hint)"}}>{cp.atoJobTitle||"not available - ATO SBR2 pending"}</span></div>
                     </div>
-                    {!cp.atoJobTitle && (
-                      <div style={{marginTop:6,fontSize:10,color:"var(--warn-t)",background:"var(--warn-l)",padding:"4px 8px",borderRadius:3,border:"0.5px solid var(--warn)"}}>
-                        ⚑ ATO job title lookup not yet configured. Check is based on employer name inference only. Configure ATO SBR2 credentials to enable confirmed job title retrieval.
-                      </div>
-                    )}
                   </div>
-
-                  {/* Deduction table */}
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
-                    <thead>
-                      <tr style={{background:"var(--surface2)"}}>
-                        {["Code","Deduction","Amount","Verdict","Action"].map(h=>(
-                          <th key={h} style={{padding:"5px 8px",textAlign:h==="Amount"?"right":"left",fontSize:10,fontFamily:"Courier New",fontWeight:600,borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>
-                        ))}
+                    <thead><tr style={{background:"var(--surface2)"}}>
+                      {["Code","Deduction","Amount","Verdict","Action"].map(function(h){return <th key={h} style={{padding:"5px 8px",textAlign:h==="Amount"?"right":"left",fontSize:10,fontFamily:"Courier New",fontWeight:600,borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>;})}</tr></thead>
+                    <tbody>{checks.map(function(row,i){return (
+                      <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:i%2===0?"var(--surface)":"transparent"}}>
+                        <td style={{padding:"5px 8px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:50}}>{row.code}</td>
+                        <td style={{padding:"5px 8px"}}><div style={{fontWeight:500}}>{row.label}</div><div style={{fontSize:10,color:"var(--muted)",marginTop:1}}>{row.reason}</div><div style={{fontSize:10,color:"var(--hint)",marginTop:1,fontFamily:"Courier New"}}>{row.ato_reference}</div></td>
+                        <td style={{padding:"5px 8px",textAlign:"right",fontFamily:"Courier New",fontWeight:600,whiteSpace:"nowrap"}}>{row.amount>0?"$"+row.amount.toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}):"--"}</td>
+                        <td style={{padding:"5px 8px",whiteSpace:"nowrap"}}>
+                          <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:20,fontSize:10,fontFamily:"Courier New",fontWeight:700,background:verdictBg[row.verdict]||"var(--surface2)",color:verdictColour[row.verdict]||"var(--muted)",border:"0.5px solid "+(verdictColour[row.verdict]||"var(--border-strong)")}}>
+                            {verdictIcon[row.verdict]||"?"} {(row.verdict||"").toUpperCase()}
+                          </span>
+                          {row.confidence && <div style={{fontSize:9,color:"var(--hint)",fontFamily:"Courier New",marginTop:2}}>{row.confidence} confidence</div>}
+                        </td>
+                        <td style={{padding:"5px 8px",fontSize:11,color:"var(--muted)"}}>{row.action}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {checks.map((row,i)=>(
-                        <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:i%2===0?"var(--surface)":"transparent"}}>
-                          <td style={{padding:"5px 8px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:50}}>{row.code}</td>
-                          <td style={{padding:"5px 8px"}}>
-                            <div style={{fontWeight:500}}>{row.label}</div>
-                            <div style={{fontSize:10,color:"var(--muted)",marginTop:1}}>{row.reason}</div>
-                            <div style={{fontSize:10,color:"var(--hint)",marginTop:1,fontFamily:"Courier New"}}>{row.ato_reference}</div>
-                          </td>
-                          <td style={{padding:"5px 8px",textAlign:"right",fontFamily:"Courier New",fontWeight:600,whiteSpace:"nowrap"}}>
-                            {row.amount > 0 ? "$"+row.amount.toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}) : "-"}
-                          </td>
-                          <td style={{padding:"5px 8px",whiteSpace:"nowrap"}}>
-                            <span style={{
-                              display:"inline-flex",alignItems:"center",gap:4,
-                              padding:"2px 8px",borderRadius:20,fontSize:10,fontFamily:"Courier New",fontWeight:700,
-                              background:verdictBg[row.verdict]||"var(--surface2)",
-                              color:verdictColour[row.verdict]||"var(--muted)",
-                              border:`0.5px solid ${verdictColour[row.verdict]||"var(--border-strong)"}`,
-                            }}>
-                              {verdictIcon[row.verdict]||"?"} {(row.verdict||"").toUpperCase()}
-                            </span>
-                            {row.confidence && (
-                              <div style={{fontSize:9,color:"var(--hint)",fontFamily:"Courier New",marginTop:2}}>{row.confidence} confidence</div>
-                            )}
-                          </td>
-                          <td style={{padding:"5px 8px",fontSize:11,color:"var(--muted)"}}>{row.action}</td>
-                        </tr>
-                      ))}
-                    </tbody>
+                    );})}</tbody>
                   </table>
-
-                  {/* Summary counts */}
                   <div style={{display:"flex",gap:10,marginTop:10,flexWrap:"wrap"}}>
-                    {[
-                      {label:"Accepted",key:"accepted",color:"var(--accent)",bg:"var(--accent-l)"},
-                      {label:"Query",key:"query",color:"var(--warn-t)",bg:"var(--warn-l)"},
-                      {label:"Rejected",key:"rejected",color:"var(--danger)",bg:"var(--danger-l)"},
-                    ].map(s=>{
-                      const count = checks.filter(c=>c.verdict===s.key).length;
-                      return count > 0 ? (
-                        <span key={s.key} style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontFamily:"Courier New",fontWeight:600,background:s.bg,color:s.color}}>
-                          {count} {s.label.toLowerCase()}
-                        </span>
-                      ) : null;
+                    {[{label:"Accepted",key:"accepted",color:"var(--accent)",bg:"var(--accent-l)"},{label:"Query",key:"query",color:"var(--warn-t)",bg:"var(--warn-l)"},{label:"Rejected",key:"rejected",color:"var(--danger)",bg:"var(--danger-l)"}].map(function(s){
+                      const count=checks.filter(function(c){return c.verdict===s.key;}).length;
+                      return count>0?<span key={s.key} style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontFamily:"Courier New",fontWeight:600,background:s.bg,color:s.color}}>{count} {s.label.toLowerCase()}</span>:null;
                     })}
                   </div>
                 </div>
@@ -4751,63 +4502,50 @@ function OutputsPanel({ state, dispatch }) {
             })()}
           </Card>
 
-          {/* Verify gate */}
           {allDone && (
             <div className="op-verify-bar">
               <span style={{fontSize:12,fontWeight:600}}>Verify:</span>
-              {[{key:"email",label:"Letter"},{key:"xero",label:"Xero JSON"},{key:"form",label:"ATO form"},{key:"xlsx",label:"Spreadsheet"},{key:"exc",label:"Exceptions"},{key:"deduct",label:"Deductions"}].map(c=>(
+              {[{key:"email",label:"Letter"},{key:"xero",label:"Xero JSON"},{key:"form",label:"ATO form"},{key:"xlsx",label:"Spreadsheet"},{key:"exc",label:"Exceptions"},{key:"deduct",label:"Deductions"}].map(function(c){return (
                 <label key={c.key}>
-                  <input type="checkbox" checked={verifyChecks[c.key]} onChange={e=>setVerifyChecks(prev=>({...prev,[c.key]:e.target.checked}))}/>
+                  <input type="checkbox" checked={verifyChecks[c.key]} onChange={function(e){setVerifyChecks(function(prev){var n={...prev};n[c.key]=e.target.checked;return n;});}}/>
                   {c.label}
                 </label>
-              ))}
+              );})}
               <div style={{flex:1}}/>
               <button className="tbtn primary" disabled={!allVerified||approved}
                 onClick={()=>{ setApproved(true); dispatch({type:"SET_PANEL",payload:"workpaper"}); }}>
-                {approved?"✓ Approved - continue →":"Approve all & continue →"}
+                {approved?"Approved - continue":"Approve all and continue"}
               </button>
             </div>
           )}
         </div>
 
-        {/* Review chat */}
         <div className="op-review">
-          <div className="op-review-hdr">Review &amp; query outputs</div>
+          <div className="op-review-hdr">Review and query outputs</div>
           <div className="op-review-msgs">
-            {reviewMsgs.length===0 && (
-              <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic",padding:"8px 0"}}>
-                Ask anything about the outputs - calculations, exceptions, or letter content.
-              </div>
-            )}
-            {reviewMsgs.map((m,i)=>(
+            {reviewMsgs.length===0 && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic",padding:"8px 0"}}>Ask anything about the outputs - calculations, exceptions, or deduction legitimacy.</div>}
+            {reviewMsgs.map(function(m,i){return (
               <div key={i} className="op-review-msg">
                 <div className="op-review-role">{m.role}</div>
-                <div className={`op-review-body ${m.role}`}>{m.content}</div>
+                <div className={"op-review-body "+m.role}>{m.content}</div>
               </div>
-            ))}
-            {reviewLoading && (
-              <div className="op-review-msg">
-                <div className="op-review-role">assistant</div>
-                <div className="op-review-body assistant loading"><Spinner/>Reviewing outputs...</div>
-              </div>
-            )}
+            );})}
+            {reviewLoading && <div className="op-review-msg"><div className="op-review-role">assistant</div><div className="op-review-body assistant loading"><Spinner/>Reviewing outputs...</div></div>}
             <div ref={reviewBottomRef}/>
           </div>
-          {reviewMsgs.length===0 && allDone && (
+          {reviewMsgs.length===0&&allDone && (
             <div className="op-review-chips">
-              {REVIEW_CHIPS.map((c,i)=>(
-                <button key={i} className="op-review-chip" onClick={()=>sendReview(c)}>{c}</button>
-              ))}
+              {REVIEW_CHIPS.map(function(c,i){return <button key={i} className="op-review-chip" onClick={function(){sendReview(c);}}>{c}</button>;})}
             </div>
           )}
           <div className="op-review-input-row">
             <textarea className="chat-input" rows={1}
               placeholder={allDone?"Ask about any output...":"Generate outputs first"}
               disabled={!allDone} value={reviewInput}
-              onChange={e=>{ setReviewInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,100)+"px"; }}
-              onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendReview(reviewInput);} }}
+              onChange={function(e){setReviewInput(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,100)+"px";}}
+              onKeyDown={function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendReview(reviewInput);}}}
             />
-            <button className="tbtn primary" onClick={()=>sendReview(reviewInput)} disabled={!allDone||reviewLoading}>→</button>
+            <button className="tbtn primary" onClick={function(){sendReview(reviewInput);}} disabled={!allDone||reviewLoading}>-&gt;</button>
           </div>
         </div>
       </div>
