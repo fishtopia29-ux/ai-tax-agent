@@ -97,7 +97,7 @@ async function loadFYConfig() {
     FY_CONFIG_META = { ...data._meta, loadedFromRemote: true };
     DEFAULT_FY = data.defaultFY || Object.keys(data.years)[0];
     FY_OPTIONS = Object.keys(FY_CONFIG);
-    console.log("? FY config loaded from fy-config.json - last updated:", FY_CONFIG_META.lastUpdated);
+    console.log("✓ FY config loaded from fy-config.json - last updated:", FY_CONFIG_META.lastUpdated);
     return { success: true, meta: FY_CONFIG_META };
   } catch (e) {
     console.warn("FY config fetch failed, using built-in fallback:", e.message);
@@ -162,23 +162,23 @@ const INCOME_TYPES = [
 ];
 
 const DOC_TYPES = [
-  { id:"payg",    icon:"?", name:"PAYG Summary",       desc:"Employer payment summary / income statement", bg:"#e1f5ee" },
-  { id:"receipt", icon:"?", name:"Deduction receipts",  desc:"Work expenses, tools, uniform, WFH",          bg:"#e6f1fb" },
-  { id:"rental",  icon:"?", name:"Rental property",     desc:"Income & expense statements, agent reports",  bg:"#faeeda" },
-  { id:"invest",  icon:"?", name:"Investment / CGT",    desc:"Brokerage statements, dividend notices",      bg:"#eeedfe" },
-  { id:"business",icon:"?", name:"Sole trader / ABN",   desc:"BAS, bank statements, invoices",              bg:"#faece7" },
-  { id:"medical", icon:"?", name:"Medical / SAPTO",     desc:"Medicare levy exemptions, aged care",         bg:"#fbeaf0" },
-  { id:"loan",    icon:"?", name:"Loan statements",     desc:"Investment property loans, interest",         bg:"#eaf3de" },
-  { id:"ess",     icon:"?", name:"ESS Statement",        desc:"Employee Share Scheme - Item 12, Box F",      bg:"#fce8f3" },
-  { id:"other",   icon:"?", name:"Other documents",     desc:"FHB, super, offsets, levies",                 bg:"#f1efe8" },
-  { id:"insurance",icon:"?", name:"Income Protection",   desc:"TAL, AIA, MLC - premium paid & benefits received", bg:"#e8f0fb" },
+  { id:"payg",    icon:"🧾", name:"PAYG Summary",       desc:"Employer payment summary / income statement", bg:"#e1f5ee" },
+  { id:"receipt", icon:"📋", name:"Deduction receipts",  desc:"Work expenses, tools, uniform, WFH",          bg:"#e6f1fb" },
+  { id:"rental",  icon:"🏠", name:"Rental property",     desc:"Income & expense statements, agent reports",  bg:"#faeeda" },
+  { id:"invest",  icon:"📈", name:"Investment / CGT",    desc:"Brokerage statements, dividend notices",      bg:"#eeedfe" },
+  { id:"business",icon:"💼", name:"Sole trader / ABN",   desc:"BAS, bank statements, invoices",              bg:"#faece7" },
+  { id:"medical", icon:"🏥", name:"Medical / SAPTO",     desc:"Medicare levy exemptions, aged care",         bg:"#fbeaf0" },
+  { id:"loan",    icon:"🏦", name:"Loan statements",     desc:"Investment property loans, interest",         bg:"#eaf3de" },
+  { id:"ess",     icon:"🏢", name:"ESS Statement",        desc:"Employee Share Scheme - Item 12, Box F",      bg:"#fce8f3" },
+  { id:"other",   icon:"📄", name:"Other documents",     desc:"FHB, super, offsets, levies",                 bg:"#f1efe8" },
+  { id:"insurance",icon:"🛡", name:"Income Protection",   desc:"TAL, AIA, MLC - premium paid & benefits received", bg:"#e8f0fb" },
 ];
 
 const STARTER_PROMPTS = [
-  { icon:"?", title:"Full return interview",  sub:"PAYG + ABN + investments", prompt:"Full return interview - PAYG, ABN, and investments. Ask me about all income sources, deductions, and offsets for FY2024-25." },
-  { icon:"?", title:"Healthcare worker",       sub:"WFH + vehicle + uniform",  prompt:"I am a healthcare worker. Interview me about WFH expenses, vehicle use, uniform and laundry, and self-education for my FY2024-25 return." },
-  { icon:"?", title:"Rental property owner",  sub:"Neg gearing + depreciation",prompt:"I own a rental property. Walk me through rental income, negative gearing, depreciation schedule, and deductible expenses for FY2024-25." },
-  { icon:"?", title:"CGT event review",        sub:"Shares, crypto, discount",  prompt:"I have CGT events to review - shares, crypto, and possibly the 50% discount. Walk me through each event for FY2024-25." },
+  { icon:"🧾", title:"Full return interview",  sub:"PAYG + ABN + investments", prompt:"Full return interview - PAYG, ABN, and investments. Ask me about all income sources, deductions, and offsets for FY2024-25." },
+  { icon:"🏥", title:"Healthcare worker",       sub:"WFH + vehicle + uniform",  prompt:"I am a healthcare worker. Interview me about WFH expenses, vehicle use, uniform and laundry, and self-education for my FY2024-25 return." },
+  { icon:"🏠", title:"Rental property owner",  sub:"Neg gearing + depreciation",prompt:"I own a rental property. Walk me through rental income, negative gearing, depreciation schedule, and deductible expenses for FY2024-25." },
+  { icon:"📈", title:"CGT event review",        sub:"Shares, crypto, discount",  prompt:"I have CGT events to review - shares, crypto, and possibly the 50% discount. Walk me through each event for FY2024-25." },
 ];
 
 const INTERVIEW_CHIPS = [
@@ -190,7 +190,7 @@ const INTERVIEW_CHIPS = [
 ];
 
 const DRAFTER_CHIPS = [
-  { label:"? Draft full tax return", prompt:(fy) => `Draft a complete FY${getFYLabel(fy)} tax return based on all extracted documents. Show all income sources itemised, deductions, taxable income, gross tax, offsets, Medicare levy, total tax withheld, and estimated refund or amount payable. Reference ATO item numbers throughout.`, primary: true },
+  { label:"❆ Draft full tax return", prompt:(fy) => `Draft a complete FY${getFYLabel(fy)} tax return based on all extracted documents. Show all income sources itemised, deductions, taxable income, gross tax, offsets, Medicare levy, total tax withheld, and estimated refund or amount payable. Reference ATO item numbers throughout.`, primary: true },
   { label:"Estimate refund",          prompt:"Calculate my estimated refund or tax payable based on all documents." },
   { label:"Review deductions",        prompt:"List all deductions identified from the documents and flag any I may have missed." },
   { label:"Explain ESS",              prompt:"Explain the ESS income and how it is treated in this tax return." },
@@ -539,7 +539,7 @@ Box F (Deferral - FULLY ASSESSABLE s.83A-110): $${parseVal(ex.essIncome).toFixed
 Box D (Upfront eligible, $1k concession s.83A-35): $${parseVal(ex.essBoxD).toFixed(2)}
 Box E (Upfront not eligible): $${parseVal(ex.essBoxE).toFixed(2)}
 Box C (TFN withheld - offsets tax): $${parseVal(ex.essTaxWithheld).toFixed(2)}
-Tx total: $${totalDiscount.toFixed(2)} ${Math.abs(totalDiscount-parseVal(ex.essIncome))<1?"? matches Box F":"? use Box F"}
+Tx total: $${totalDiscount.toFixed(2)} ${Math.abs(totalDiscount-parseVal(ex.essIncome))<1?"✓ matches Box F":"? use Box F"}
 TRANSACTIONS (${txs.length} rows - SALE rows use sale-date taxing point; VEST rows: cost base = assessable amount for future CGT):
 ${txTable}
 Notes: ${ex.notes||""}
@@ -992,8 +992,8 @@ function Sidebar({ state, dispatch, onExport }) {
           const cfg = window.GREENGRAPH_CONFIG || {};
           const hasConfigKey = cfg.ANTHROPIC_API_KEY && cfg.ANTHROPIC_API_KEY !== "sk-ant-YOUR-KEY-HERE";
           const useProxy = cfg.USE_PROXY === true;
-          if (hasConfigKey || useProxy) return <div className="api-ok">? {useProxy ? "Proxy mode - key on server" : "API key configured"}</div>;
-          if (apiKey.length > 10) return <div className="api-ok">? API key set</div>;
+          if (hasConfigKey || useProxy) return <div className="api-ok">🔑 {useProxy ? "Proxy mode - key on server" : "API key configured"}</div>;
+          if (apiKey.length > 10) return <div className="api-ok">🔑 API key set</div>;
           return (
             <div className="api-wrap">
               <div>? Anthropic API Key</div>
@@ -1003,13 +1003,13 @@ function Sidebar({ state, dispatch, onExport }) {
             </div>
           );
         })()}
-        <div className="pii-pill">? PII Guard Active</div>
+        <div className="pii-pill">🛡 PII Guard Active</div>
         <SbSection>Client profile</SbSection>
         <div style={{ padding:"4px 14px 6px" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
             <div className={`toggle-box${state.clientProfile.hasSpouse?" on":""}`} style={{ cursor:"pointer", flexShrink:0 }}
               onClick={() => dispatch({ type:"SET_CLIENT_PROFILE", payload:{ hasSpouse:!state.clientProfile.hasSpouse } })}>
-              {state.clientProfile.hasSpouse ? "?" : ""}
+              {state.clientProfile.hasSpouse ? "✓" : ""}
             </div>
             <span style={{ fontSize:12, color:"#7ab87a" }}>Has spouse / de facto</span>
           </div>
@@ -1048,7 +1048,7 @@ function Sidebar({ state, dispatch, onExport }) {
         {INCOME_TYPES.map(it => (
           <div key={it.id} className={`inc-toggle${incomeTypes.has(it.id) ? " on" : ""}`}
             onClick={() => dispatch({ type:"TOGGLE_INCOME", payload:it.id })}>
-            <div className="toggle-box">{incomeTypes.has(it.id) ? "?" : ""}</div>
+            <div className="toggle-box">{incomeTypes.has(it.id) ? "✓" : ""}</div>
             <span>{it.label}</span>
             <span className="inc-code">{it.code}</span>
           </div>
@@ -1156,7 +1156,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
       }
       const riskMatch = reply.match(/RISKS\n([\s\S]*?)(?=\n\n|$)/);
       if (riskMatch) {
-        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("?")).map(r => r.replace(/^[?]\s*/, ""));
+        const risks = riskMatch[1].trim().split("\n").filter(l => l.startsWith("->")).map(r => r.replace(/^->\s*/, ""));
         dispatch({ type:"SET_RISKS", payload:risks });
       }
     } catch(e) {
@@ -1172,7 +1172,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
         {isEmpty && (
           <>
             <div style={{ textAlign:"center", padding:"10px 0 4px" }}>
-              <div style={{ fontSize:22, marginBottom:6 }}>?</div>
+              <div style={{ fontSize:22, marginBottom:6 }}>📋</div>
               <div style={{ fontSize:13, fontWeight:500, marginBottom:4 }}>Start a tax interview</div>
               <div style={{ fontSize:12, color:"var(--muted)" }}>Select income types, enter your API key, then pick a starting point or type your own question.</div>
             </div>
@@ -1202,7 +1202,7 @@ Never ask for TFN, full name, DOB, address, ABN, or bank details.`;
         <div ref={bottomRef} />
       </div>
       <div className="notice warn" style={{ margin:"0 20px", borderRadius:"var(--rs)" }}>
-        <span>?</span><span>Do not enter TFN, full name, DOB, address, ABN, or bank details.</span>
+        <span>⛑</span><span>Do not enter TFN, full name, DOB, address, ABN, or bank details.</span>
       </div>
       <div className="chips-row" style={{ borderTop:"none", paddingTop:8 }}>
         {INTERVIEW_CHIPS.map((c, i) => <span key={i} className="chip" onClick={() => send(c.prompt)}>{c.label}</span>)}
@@ -1231,7 +1231,7 @@ function EssCard({ doc }) {
   return (
     <div className="ext-panel">
       <div className="ext-hdr">
-        <span>?</span>
+        <span>⛑</span>
         <span style={{ flex:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{doc.file.name}</span>
         <span style={{ fontSize:10, fontFamily:"Courier New", color:"var(--hint)", flexShrink:0 }}>ESS ? Item 12 ? {txs.length} rows</span>
       </div>
@@ -1246,7 +1246,7 @@ function EssCard({ doc }) {
         </div>
         {saleRows.length > 0 && (
           <div className="notice warn" style={{ marginBottom:8, fontSize:11 }}>
-            <span>?</span><span>{saleRows.length} sale-date event(s) - market value basis is sale price per ATO rules.</span>
+            <span>⛑</span><span>{saleRows.length} sale-date event(s) - market value basis is sale price per ATO rules.</span>
           </div>
         )}
         {txs.length > 0 && (
@@ -1392,8 +1392,8 @@ function VaultPanel({ state, dispatch, onDraft }) {
   return (
     <div className="panel">
       <div className="vault-wrap">
-        <div className="notice warn"><span>?</span><span>Do not upload documents containing TFN, full name, or bank account numbers. Use anonymised copies only.</span></div>
-        <div className="notice info"><span>?</span><span>Upload PDFs or images. Claude will extract all ATO-relevant figures automatically.</span></div>
+        <div className="notice warn"><span>⛑</span><span>Do not upload documents containing TFN, full name, or bank account numbers. Use anonymised copies only.</span></div>
+        <div className="notice info"><span>⛑</span><span>Upload PDFs or images. Claude will extract all ATO-relevant figures automatically.</span></div>
         <div className={`upload-zone${drag ? " drag" : ""}`}
           onClick={() => fileRef.current && fileRef.current.click()}
           onDragOver={e => { e.preventDefault(); setDrag(true); }}
@@ -1401,7 +1401,7 @@ function VaultPanel({ state, dispatch, onDraft }) {
           onDragLeave={() => setDrag(false)}>
           <input ref={fileRef} type="file" style={{ display:"none" }} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.csv"
             onChange={e => addFiles(e.target.files)} />
-          <div className="uz-icon">?</div>
+          <div className="uz-icon">⬆</div>
           <div className="uz-title">Drop files here or click to upload</div>
           <div className="uz-sub">PDF, PNG, JPG, XLSX, CSV - PAYG summaries, receipts, rental statements, brokerage reports, ESS statements, expense spreadsheets</div>
         </div>
@@ -1454,7 +1454,7 @@ function VaultPanel({ state, dispatch, onDraft }) {
                     } catch(e) { return null; }
                   })()}
                   <span className={`doc-status ${doc.status}`}>{statusLabel}</span>
-                  <span className="doc-remove" onClick={() => dispatch({ type:"REMOVE_DOC", payload:doc.id })}>?</span>
+                  <span className="doc-remove" onClick={() => dispatch({ type:"REMOVE_DOC", payload:doc.id })}>✕</span>
                 </div>
               );
             })}
@@ -1463,7 +1463,7 @@ function VaultPanel({ state, dispatch, onDraft }) {
         {hasDone && (
           <>
             <div className="cta-banner">
-              <div style={{ fontSize:26, flexShrink:0 }}>?</div>
+              <div style={{ fontSize:26, flexShrink:0 }}>✨</div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>Documents extracted - ready to draft</div>
                 <div style={{ fontSize:11, color:"var(--muted)" }}>All documents have been extracted. Click to generate a complete FY{getFYLabel(state.selectedFY)} tax return draft.</div>
@@ -1652,7 +1652,7 @@ function TaxReturnRenderer({ content }) {
                 : notesRaw.replace(/\.\s+(?=[A-Z])/g, ".\n").split("\n").filter(l => l.trim());
               return bullets.map((note, i) => (
                 <li key={i} style={{ display:"flex", gap:8, padding:"5px 0", fontSize:12, lineHeight:1.7, color:"var(--muted)", borderBottom:"0.5px solid var(--border)" }}>
-                  <span style={{ color:"var(--warn)", flexShrink:0, fontSize:11, marginTop:3 }}>?</span>
+                  <span style={{ color:"var(--warn)", flexShrink:0, fontSize:11, marginTop:3 }}>⛑</span>
                   <span>{note.replace(/^[-?*????]\s*/, "").trim()}</span>
                 </li>
               ));
@@ -1815,7 +1815,7 @@ function FYModal({ state, dispatch }) {
   return (
     <div className="modal-overlay">
       <div className="modal" style={{ maxWidth:420 }}>
-        <div className="modal-title">? Select financial year</div>
+        <div className="modal-title">📅 Select financial year</div>
         <div className="modal-sub">Choose the tax year you are working on. You can change this at any time using the dropdown in the top bar.</div>
         <div style={{ display:"flex", flexDirection:"column", gap:8, margin:"8px 0 16px" }}>
           {FY_OPTIONS.map(fy => {
@@ -1837,7 +1837,7 @@ function FYModal({ state, dispatch }) {
                   </div>
                   <div style={{ fontSize:11, color:"var(--muted)", marginTop:2 }}>{cfg.notes}</div>
                 </div>
-                <span style={{ fontSize:18, color: isCurrent ? "var(--accent)" : "var(--hint)" }}>?</span>
+                <span style={{ fontSize:18, color: isCurrent ? "var(--accent)" : "var(--hint)" }}>→</span>
               </div>
             );
           })}
@@ -1910,7 +1910,7 @@ function ArchiveModal({ state, dispatch }) {
         <div className="modal-actions">
           <button className="tbtn" onClick={() => dispatch({ type:"HIDE_ARCHIVE_MODAL" })}>Cancel</button>
           <button className="tbtn primary" onClick={confirm}>
-            {hasData ? "? Save & clear session" : "? Clear & start fresh"}
+            {hasData ? "📥 Save & clear session" : "? Clear & start fresh"}
           </button>
         </div>
       </div>
@@ -1980,7 +1980,7 @@ function App() {
             const cfg = getFYConfig(state.selectedFY);
             if (!cfg.confirmed) return (
               <div className="notice warn" style={{ margin:"0", borderRadius:0, borderLeft:"none", borderRight:"none", borderTop:"none", flexShrink:0 }}>
-                <span>?</span>
+                <span>⛑</span>
                 <span>
                   <strong>FY {getFYLabel(state.selectedFY)} - provisional rates.</strong> {cfg.provisionalNote || "Confirm with ATO before lodging."}
                 </span>
@@ -1991,7 +1991,7 @@ function App() {
           {/* Config staleness banner */}
           {state.configStatus.loaded && !state.configStatus.fromRemote && !state.configStatus.isLocal && (
             <div className="notice info" style={{ margin:"0", borderRadius:0, borderLeft:"none", borderRight:"none", borderTop:"none", flexShrink:0 }}>
-              <span>?</span>
+              <span>⛑</span>
               <span>Using built-in tax rates - <strong>fy-config.json</strong> could not be loaded from server. Place the file in your web root to enable remote rate updates.</span>
             </div>
           )}
@@ -2323,7 +2323,7 @@ function openEstimatePreview(state, clientRef) {
     <meta charset="UTF-8"><title>Taxation Estimate - ${clientName}</title>
     <style>${printStyles}</style>
   </head><body>
-    <button class="print-btn no-print" onclick="window.print()">? Print / Save as PDF</button>
+    <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
     ${estimatePage}
     ${incomePage}
     ${deductPage}
@@ -2985,7 +2985,7 @@ function WorkpaperPanel({ state }) {
     return (
       <div className="panel">
         <div className="wp-wrap" style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", color:"var(--muted)", gap:12 }}>
-          <div style={{ fontSize:32 }}>?</div>
+          <div style={{ fontSize:32 }}>📋</div>
           <div style={{ fontSize:14, fontWeight:600 }}>No extracted documents yet</div>
           <div style={{ fontSize:12, maxWidth:340, textAlign:"center" }}>
             Go to <strong>ITR Preparation</strong>, upload and extract your client's documents, then return here to view the ATO-formatted workpaper and Xero export.
@@ -3051,7 +3051,7 @@ function WorkpaperPanel({ state }) {
           <div style={{ marginBottom:16 }}>
             {flags.map((f, i) => (
               <div key={i} className={`notice ${f.type}`} style={{ marginBottom:6 }}>
-                <span>{f.type === "warn" ? "?" : "?"}</span>
+                <span>{f.type === "warn" ? "⚠" : "ⓘ"}</span>
                 <span style={{ fontSize:11 }}>{f.msg}</span>
               </div>
             ))}
@@ -3061,7 +3061,7 @@ function WorkpaperPanel({ state }) {
         {/* Override notice */}
         {Object.keys(overrides).length > 0 && (
           <div className="notice warn" style={{ marginBottom:12 }}>
-            <span>?</span>
+            <span>⛑</span>
             <span style={{ fontSize:11 }}>
               {Object.keys(overrides).length} field(s) manually overridden.
               Overrides are included in all exports.{" "}
@@ -3391,7 +3391,7 @@ function XeroPanel({ state, dispatch }) {
 
         {/* Header */}
         <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-          <div style={{ fontSize:28 }}>?</div>
+          <div style={{ fontSize:28 }}>📋</div>
           <div>
             <div style={{ fontSize:16, fontWeight:700 }}>Xero Tax Integration</div>
             <div style={{ fontSize:11, color:"var(--muted)" }}>Connect to Xero Tax, review field mapping, and submit the ITR directly.</div>
@@ -3418,7 +3418,7 @@ function XeroPanel({ state, dispatch }) {
         {/* Connection state */}
         {!xero.connected ? (
           <div className="xero-connect-box">
-            <div className="xero-logo">?</div>
+            <div className="xero-logo">🔗</div>
             <div className="xero-connect-title">Connect to Xero Tax</div>
             <div className="xero-connect-sub">
               Authorise this app to submit tax returns to Xero Tax on your behalf.
@@ -3476,7 +3476,7 @@ function XeroPanel({ state, dispatch }) {
             {/* No docs warning */}
             {!hasDocs && (
               <div className="notice warn" style={{ marginBottom:16 }}>
-                <span>?</span>
+                <span>⛑</span>
                 <span>No extracted documents - go to <strong>ITR Preparation</strong> to upload and extract documents first, then return here to submit.</span>
               </div>
             )}
@@ -3968,7 +3968,7 @@ function openFormI(state, clientName) {
     <title>ATO Form I - ${name} - Individual Tax Return ${getFYConfig(state.selectedFY||DEFAULT_FY).endYear}</title>
     <style>${css}</style>
   </head><body>
-    <button class="print-btn no-print" onclick="window.print()">? Print / Save as PDF</button>
+    <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
     ${page1}
     ${page2}
     ${deductionsSchedule}
@@ -4013,7 +4013,7 @@ function FormIPanel({ state }) {
 
         {!hasDocs ? (
           <div style={{ textAlign:"center", padding:"40px 20px", color:"var(--hint)" }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>?</div>
+            <div style={{ fontSize:32, marginBottom:12 }}>📄</div>
             <div style={{ fontSize:14, fontWeight:600, marginBottom:6 }}>No extracted documents</div>
             <div style={{ fontSize:12 }}>Upload and extract documents in <strong>ITR Preparation</strong> first.</div>
           </div>
@@ -4055,7 +4055,7 @@ function FormIPanel({ state }) {
             </div>
 
             <div className="notice info">
-              <span>?</span>
+              <span>⛑</span>
               <span style={{ fontSize:11 }}>
                 Enter the client's full name above, then click <strong>Open Form I</strong> to generate the printable form in a new window.
                 Use your browser's Print (?P / Ctrl+P) ? Save as PDF to produce the client copy document.
