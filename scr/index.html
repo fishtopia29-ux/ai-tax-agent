@@ -1091,11 +1091,11 @@ function Sidebar({ state, dispatch, onExport }) {
           const isActive = panel === "output-detail" && state.activeOutput === item.key;
           return (
             <div key={item.key}
-              style={{display:"flex",alignItems:"center",gap:6,padding:"4px 14px 4px 26px",cursor:st==="idle"?"default":"pointer",opacity:st==="idle"?0.45:1}}
+              style={{display:"flex",alignItems:"center",gap:6,padding:"4px 14px 4px 26px",cursor:st==="idle"?"default":"pointer"}}
               onClick={() => { if(st !== "idle") { dispatch({type:"SET_PANEL",payload:"output-detail"}); dispatch({type:"SET_ACTIVE_OUTPUT",payload:item.key}); } }}>
               <span style={{width:5,height:5,borderRadius:"50%",flexShrink:0,background:
-                st==="done"?"#4ab45a":st==="loading"?"#ba7517":st==="error"?"#993c1d":"rgba(255,255,255,0.12)"}} />
-              <span style={{fontSize:10,fontFamily:"Courier New",flex:1,color:isActive?"#7de08a":st==="done"?"#7ab87a":st==="loading"?"#ba7517":"#2d4d2d",
+                st==="done"?"#4ab45a":st==="loading"?"#ba7517":st==="error"?"#993c1d":"rgba(255,255,255,0.25)"}} />
+              <span style={{fontSize:10,fontFamily:"Courier New",flex:1,color:isActive?"#7de08a":st==="done"?"#7ab87a":st==="loading"?"#ba7517":"#7ab87a",
                 fontWeight:isActive?600:400,textDecoration:isActive?"underline":"none"}}>
                 {item.label}
               </span>
@@ -1106,16 +1106,16 @@ function Sidebar({ state, dispatch, onExport }) {
           );
         })}
         {/* Step 4 */}
-        <div className="nav-item" style={{opacity:0.35,cursor:"default"}}>
-          <span className="nav-dot" style={{background:"#2d4d2d"}} />
+        <div className="nav-item" style={{cursor:"default"}}>
+          <span className="nav-dot" />
           <span style={{flex:1}}>Step 4 - Navigate approval</span>
-          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(45,74,45,0.4)",color:"#2d4d2d",border:"0.5px solid rgba(45,74,45,0.6)"}}>Soon</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(186,117,23,0.2)",color:"#ba7517",border:"0.5px solid rgba(186,117,23,0.4)"}}>Soon</span>
         </div>
         {/* Step 5 */}
-        <div className="nav-item" style={{opacity:0.35,cursor:"default"}}>
-          <span className="nav-dot" style={{background:"#2d4d2d"}} />
+        <div className="nav-item" style={{cursor:"default"}}>
+          <span className="nav-dot" />
           <span style={{flex:1}}>Step 5 - Lodge with ATO &amp; update records</span>
-          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(45,74,45,0.4)",color:"#2d4d2d",border:"0.5px solid rgba(45,74,45,0.6)"}}>Soon</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(186,117,23,0.2)",color:"#ba7517",border:"0.5px solid rgba(186,117,23,0.4)"}}>Soon</span>
         </div>
         {/* Supporting panels - collapsed under a divider */}
         <div className="sb-divider" />
