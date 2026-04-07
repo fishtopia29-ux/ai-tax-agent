@@ -371,6 +371,8 @@ const INITIAL = {
   configStatus: { loaded: false, fromRemote: false, lastUpdated: null, error: null },
   clientProfile: { hasSpouse: false, numDependants: 0, spouseIncome: 0, phiRebateReceived: 0, occupation: "", occupationSource: "manual", atoJobTitle: null, atoJobTitleStatus: "not_fetched" },
   xero: { connected: false, orgName: null, orgId: null, accessToken: null, tenantId: null, lastSubmit: null, submitStatus: null, submitError: null },
+  outputsState: { letter:"idle", xero:"idle", form:"idle", xlsx:"idle", exc:"idle", deduct:"idle", exceptions:[], wpData:null, deductData:[], xeroData:null, clientRef:"" },
+  activeOutput: null,
 };
 
 function reducer(state, action) {
@@ -398,6 +400,8 @@ function reducer(state, action) {
     case "REFRESH_FY_OPTIONS":return { ...state, _fyRefresh: Date.now() };
     case "SET_CLIENT_PROFILE": return { ...state, clientProfile: { ...state.clientProfile, ...action.payload } };
     case "SET_XERO":           return { ...state, xero: { ...state.xero, ...action.payload } };
+    case "SET_OUTPUTS_STATE":   return { ...state, outputsState: { ...state.outputsState, ...action.payload } };
+    case "SET_ACTIVE_OUTPUT":   return { ...state, activeOutput: action.payload };
     case "RESET_SESSION":      return {
       ...INITIAL,
       apiKey: state.apiKey,
@@ -1053,23 +1057,80 @@ function Sidebar({ state, dispatch, onExport }) {
             <span className="inc-code">{it.code}</span>
           </div>
         ))}
-        <SbSection>Panels</SbSection>
+        <SbSection>ITR Steps</SbSection>
+        {/* Step 1 */}
+        <div className={`nav-item${panel === "interview" ? " active" : ""}`}
+          onClick={() => dispatch({ type:"SET_PANEL", payload:"interview" })}>
+          <span className={`nav-dot${state.chatMessages.length > 0 ? " on" : ""}`} />
+          <span style={{flex:1}}>Step 1 - Client tax interview</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(186,117,23,0.2)",color:"#ba7517",border:"0.5px solid rgba(186,117,23,0.4)"}}>WIP</span>
+        </div>
+        {/* Step 2 */}
+        <div className={`nav-item${panel === "vault" ? " active" : ""}`}
+          onClick={() => dispatch({ type:"SET_PANEL", payload:"vault" })}>
+          <span className={`nav-dot${hasDoneVault ? " on" : ""}`} />
+          <span style={{flex:1}}>Step 2 - Load client data & ATO SBR2</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(186,117,23,0.2)",color:"#ba7517",border:"0.5px solid rgba(186,117,23,0.4)"}}>WIP</span>
+        </div>
+        {/* Step 3 - Draft return with sub-items */}
+        <div className={`nav-item${(panel === "drafter" || panel === "output-detail") ? " active" : ""}`}
+          onClick={() => dispatch({ type:"SET_PANEL", payload:"drafter" })}>
+          <span className={`nav-dot${state.drafterMessages.length > 0 ? " on" : ""}`} />
+          <span>Step 3 - Draft return</span>
+        </div>
+        {/* Step 3 sub-items - always visible */}
         {[
-          { id:"interview", label:"Client Tax Interview" },
-          { id:"vault",     label:"ITR Preparation" },
-          { id:"drafter",   label:"Return Drafter" },
+          { key:"letter",  label:"Client pay & lodge approval letter" },
+          { key:"xero",    label:"Xero JSON - ATO lodgement" },
+          { key:"form",    label:"ATO completed template" },
+          { key:"xlsx",    label:"Calculations spreadsheet" },
+          { key:"exc",     label:"Exceptions & areas of interest" },
+          { key:"deduct",  label:"Deduction legitimacy check" },
+        ].map(item => {
+          const st = state.outputsState[item.key] || "idle";
+          const isActive = panel === "output-detail" && state.activeOutput === item.key;
+          return (
+            <div key={item.key}
+              style={{display:"flex",alignItems:"center",gap:6,padding:"4px 14px 4px 26px",cursor:st==="idle"?"default":"pointer",opacity:st==="idle"?0.45:1}}
+              onClick={() => { if(st !== "idle") { dispatch({type:"SET_PANEL",payload:"output-detail"}); dispatch({type:"SET_ACTIVE_OUTPUT",payload:item.key}); } }}>
+              <span style={{width:5,height:5,borderRadius:"50%",flexShrink:0,background:
+                st==="done"?"#4ab45a":st==="loading"?"#ba7517":st==="error"?"#993c1d":"rgba(255,255,255,0.12)"}} />
+              <span style={{fontSize:10,fontFamily:"Courier New",flex:1,color:isActive?"#7de08a":st==="done"?"#7ab87a":st==="loading"?"#ba7517":"#2d4d2d",
+                fontWeight:isActive?600:400,textDecoration:isActive?"underline":"none"}}>
+                {item.label}
+              </span>
+              {st==="loading" && <span style={{fontSize:8,fontFamily:"Courier New",color:"#ba7517"}}>...</span>}
+              {st==="done"    && <span style={{fontSize:8,fontFamily:"Courier New",color:"#4ab45a"}}>done</span>}
+              {st==="error"   && <span style={{fontSize:8,fontFamily:"Courier New",color:"#993c1d"}}>err</span>}
+            </div>
+          );
+        })}
+        {/* Step 4 */}
+        <div className="nav-item" style={{opacity:0.35,cursor:"default"}}>
+          <span className="nav-dot" style={{background:"#2d4d2d"}} />
+          <span style={{flex:1}}>Step 4 - Navigate approval</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(45,74,45,0.4)",color:"#2d4d2d",border:"0.5px solid rgba(45,74,45,0.6)"}}>Soon</span>
+        </div>
+        {/* Step 5 */}
+        <div className="nav-item" style={{opacity:0.35,cursor:"default"}}>
+          <span className="nav-dot" style={{background:"#2d4d2d"}} />
+          <span style={{flex:1}}>Step 5 - Lodge with ATO & update records</span>
+          <span style={{fontSize:9,fontFamily:"Courier New",padding:"1px 5px",borderRadius:3,background:"rgba(45,74,45,0.4)",color:"#2d4d2d",border:"0.5px solid rgba(45,74,45,0.6)"}}>Soon</span>
+        </div>
+        {/* Supporting panels - collapsed under a divider */}
+        <div className="sb-divider" />
+        <SbSection>Supporting panels</SbSection>
+        {[
           { id:"workpaper", label:"ITR Workpaper / Export" },
           { id:"xero",      label:"Xero Tax Integration" },
           { id:"formi",     label:"ATO Form I - Client Copy" },
-          { id:"outputs",   label:"Step 3 - Outputs Hub" },
         ].map(p => (
           <div key={p.id} className={`nav-item${panel === p.id ? " active" : ""}`}
             onClick={() => dispatch({ type:"SET_PANEL", payload:p.id })}>
             <span className={`nav-dot${
-              (p.id === "vault" && hasDoneVault) || (p.id === "drafter" && state.drafterMessages.length > 0) ||
               (p.id === "workpaper" && hasDoneVault) ||
               (p.id === "xero" && state.xero?.connected) ||
-              (p.id === "formi" && hasDoneVault) || (p.id === "outputs" && hasDoneVault) ? " on" : ""
+              (p.id === "formi" && hasDoneVault) ? " on" : ""
             }`} />
             {p.label}
           </div>
@@ -1785,13 +1846,19 @@ One note per line.`;
           <span key={i} className={`chip${c.primary ? " primary-chip" : ""}`} onClick={() => send(typeof c.prompt === 'function' ? c.prompt(state.selectedFY) : c.prompt)}>{c.label}</span>
         ))}
         {drafterMessages.some(m => m.role === "assistant") && (
-          <span className="chip" style={{ background:"#1a3a5c", color:"#fff", borderColor:"#1a3a5c" }}
-            onClick={() => {
-              const ref = prompt("Client name for letter and estimate:", "Client");
-              if (ref !== null) generateClientLetter(state, ref);
-            }}>
-            ? Generate client letter + estimate
-          </span>
+          <>
+            <span className="chip" style={{ background:"#1a3a5c", color:"#fff", borderColor:"#1a3a5c" }}
+              onClick={() => {
+                const ref = prompt("Client name for letter and estimate:", "Client");
+                if (ref !== null) generateClientLetter(state, ref);
+              }}>
+              📄 Generate client letter + estimate
+            </span>
+            <span className="chip" style={{ background:"#2d7a3a", color:"#fff", borderColor:"#2d7a3a" }}
+              onClick={() => triggerOutputGeneration(state, dispatch)}>
+              ⚡ Generate all 6 outputs
+            </span>
+          </>
         )}
       </div>
       <div className="chat-input-row">
@@ -1948,7 +2015,7 @@ function App() {
     downloadText(`austax-notes-fy${fyTag2}.txt`, buildArchiveText("Export", state));
   }, [state]);
 
-  const PANEL_TITLES = { interview:"Client Tax Interview", vault:"ITR Preparation", drafter:"Return Drafter", workpaper:"ITR Workpaper / Export", xero:"Xero Tax Integration", formi:"ATO Form I - Client Copy", outputs:"Step 3 - Outputs Hub" };
+  const PANEL_TITLES = { interview:"Step 1 - Client tax interview", vault:"Step 2 - Load client data & ATO SBR2", drafter:"Step 3 - Draft return", workpaper:"ITR Workpaper / Export", xero:"Xero Tax Integration", formi:"ATO Form I - Client Copy", "output-detail":"Step 3 - Output detail" };
 
   return (
     <>
@@ -2007,7 +2074,7 @@ function App() {
           {state.panel === "workpaper"  && <WorkpaperPanel  state={state} dispatch={dispatch} />}
           {state.panel === "xero"       && <XeroPanel       state={state} dispatch={dispatch} />}
           {state.panel === "formi"      && <FormIPanel      state={state} dispatch={dispatch} />}
-          {state.panel === "outputs"    && <OutputsPanel    state={state} dispatch={dispatch} />}
+          {state.panel === "output-detail" && <OutputDetailPanel state={state} dispatch={dispatch} />}
         </div>
       </div>
       <FYModal state={state} dispatch={dispatch} />
@@ -4196,8 +4263,7 @@ function buildOutputsReviewContext(state, wpData, exceptions) {
 
 // ?????????????????????????????????????????
 //  OUTPUTS PANEL
-// ?????????????????????????????????????????
-function OutputsPanel({ state, dispatch }) {
+// ?????????????????????????????????????????) {
   const { apiKey, docs, clientProfile, selectedFY } = state;
   const hasDocs = docs.some(d => d.status === "done" && d.extracted && !d.extracted.error);
   const IDLE = { status:"idle", data:null };
@@ -4546,6 +4612,346 @@ function OutputsPanel({ state, dispatch }) {
               onKeyDown={function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendReview(reviewInput);}}}
             />
             <button className="tbtn primary" onClick={function(){sendReview(reviewInput);}} disabled={!allDone||reviewLoading}>-&gt;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────
+//  TRIGGER OUTPUT GENERATION FROM DRAFTER
+//  Called when accountant clicks "Generate all 6 outputs" in drafter
+// ─────────────────────────────────────────
+async function triggerOutputGeneration(state, dispatch) {
+  if (!state.apiKey) { alert("Please enter your Anthropic API key."); return; }
+  const hasDocs = state.docs.some(function(d){return d.status==="done"&&d.extracted&&!d.extracted.error;});
+  if (!hasDocs) { alert("No extracted documents - complete Step 2 first."); return; }
+
+  // Navigate to first output item
+  dispatch({ type:"SET_PANEL", payload:"output-detail" });
+  dispatch({ type:"SET_ACTIVE_OUTPUT", payload:"letter" });
+
+  // Reset all to loading
+  dispatch({ type:"SET_OUTPUTS_STATE", payload:{
+    letter:"loading", xero:"loading", form:"loading", xlsx:"loading", exc:"loading", deduct:"loading",
+    exceptions:[], wpData:null, deductData:[], xeroData:null
+  }});
+
+  const wp = buildWorkpaperData(state.docs, state.clientProfile, state.selectedFY, {});
+  dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData:wp, form:"done" }});
+
+  // Xero JSON - synchronous
+  const xeroJson = buildXeroJSON(wp, {}, state.clientProfile, state.selectedFY);
+  dispatch({ type:"SET_OUTPUTS_STATE", payload:{ xeroData:xeroJson, xero:"done" }});
+
+  // Letter - synchronous (popup-based)
+  dispatch({ type:"SET_OUTPUTS_STATE", payload:{ letter:"done" }});
+
+  // XLSX - synchronous
+  dispatch({ type:"SET_OUTPUTS_STATE", payload:{ xlsx:"done" }});
+
+  // Run AI calls in parallel
+  try {
+    const [excRes, deductRes] = await Promise.allSettled([
+      generateExceptions(state.apiKey, state, wp),
+      checkDeductionLegitimacy(state.apiKey, state, wp),
+    ]);
+    const aiExc = excRes.status==="fulfilled" ? excRes.value : [];
+    const allExc = mergeExceptions(wp.flags, aiExc);
+    const deductData = deductRes.status==="fulfilled" ? deductRes.value : [];
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, exc:"done", deductData:deductData, deduct:"done" }});
+  } catch(e) {
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exc:"error", deduct:"error" }});
+  }
+}
+
+// ─────────────────────────────────────────
+//  OUTPUT DETAIL PANEL
+//  Shows the selected output as main content with review chat
+// ─────────────────────────────────────────
+function OutputDetailPanel({ state, dispatch }) {
+  const { apiKey, activeOutput, outputsState, docs, clientProfile, selectedFY } = state;
+  const [reviewMsgs, setReviewMsgs] = useState([]);
+  const [reviewInput, setReviewInput] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [verifyChecks, setVerifyChecks] = useState({ letter:false, xero:false, form:false, xlsx:false, exc:false, deduct:false });
+  const reviewBottomRef = useRef(null);
+
+  useEffect(function(){ reviewBottomRef.current && reviewBottomRef.current.scrollIntoView({behavior:"smooth"}); }, [reviewMsgs, reviewLoading]);
+
+  const wp = outputsState.wpData;
+  const allDone = ["letter","xero","form","xlsx","exc","deduct"].every(function(k){ return outputsState[k]==="done"||outputsState[k]==="error"; });
+  const allVerified = Object.values(verifyChecks).every(Boolean);
+
+  const sendReview = useCallback(async function(text) {
+    if (!apiKey || !text.trim()) return;
+    const clean = scrubPII(text.trim());
+    setReviewInput("");
+    setReviewMsgs(function(prev){ return [...prev, {role:"user",content:clean}]; });
+    setReviewLoading(true);
+    try {
+      var sys = buildOutputsReviewContext(state, wp, outputsState.exceptions);
+      var reply = await callClaude(apiKey, { system:sys, messages:[...reviewMsgs,{role:"user",content:clean}], maxTokens:600 });
+      setReviewMsgs(function(prev){ return [...prev, {role:"assistant",content:reply}]; });
+    } catch(e) {
+      setReviewMsgs(function(prev){ return [...prev, {role:"assistant",content:"Error: "+e.message}]; });
+    }
+    setReviewLoading(false);
+  }, [apiKey, reviewMsgs, state, wp, outputsState.exceptions]);
+
+  const OUTPUT_DEFS = [
+    { key:"letter",  label:"Client pay & lodge approval letter" },
+    { key:"xero",    label:"Xero JSON - ATO lodgement" },
+    { key:"form",    label:"ATO completed template" },
+    { key:"xlsx",    label:"Calculations spreadsheet" },
+    { key:"exc",     label:"Exceptions & areas of interest" },
+    { key:"deduct",  label:"Deduction legitimacy check" },
+  ];
+
+  const REVIEW_CHIPS = ["Why is the LITO this amount?","Explain the ESS calculation","What deductions might be missing?","Is the Medicare levy correct?","Explain the refund figure","Which exceptions are most urgent?"];
+
+  // Render active output content
+  function renderOutputContent() {
+    var st = outputsState[activeOutput];
+    if (!activeOutput) return <div style={{padding:40,textAlign:"center",color:"var(--hint)"}}>Select an output from the sidebar to view details.</div>;
+    if (st === "loading") return <div style={{padding:40,textAlign:"center",color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Generating...</div>;
+    if (st === "error")   return <div className="notice warn"><span>!</span><span>Generation failed - try again.</span></div>;
+    if (st === "idle")    return <div style={{padding:40,textAlign:"center",color:"var(--hint)"}}>Click "Generate all 6 outputs" in the Return Drafter to generate this output.</div>;
+
+    if (activeOutput === "letter") return (
+      <div>
+        <div style={{padding:"12px",background:"var(--accent-l)",border:"0.5px solid var(--accent)",borderRadius:"var(--rs)",marginBottom:12}}>
+          <div style={{fontSize:13,fontWeight:600,color:"var(--accent-t)",marginBottom:4}}>Formal engagement letter + taxation estimate</div>
+          <div style={{fontSize:11,color:"var(--muted)"}}>Includes: cover letter with fee invoice, taxation estimate (Debits/Credits), income schedule, deductions schedule. Opens in a new window for print / PDF.</div>
+        </div>
+        <button className="tbtn primary" onClick={function(){ generateClientLetter(state, outputsState.clientRef||"Client"); }}>Open letter + estimate</button>
+        <div style={{marginTop:10,fontSize:11,color:"var(--hint)"}}>Firm: {FIRM_CONFIG.name} · {FIRM_CONFIG.signerName}, {FIRM_CONFIG.signerTitle} · Fee (inc GST): ${(FIRM_CONFIG.feeExGst*1.1).toFixed(2)}</div>
+      </div>
+    );
+
+    if (activeOutput === "xero") return (
+      <div>
+        <div style={{marginBottom:8,display:"flex",gap:6}}>
+          <button className="tbtn" onClick={function(){
+            var blob=new Blob([JSON.stringify(outputsState.xeroData,null,2)],{type:"application/json"});
+            var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Xero_ITR_FY"+selectedFY.replace("-","")+"_"+(outputsState.clientRef||"Client").replace(/\s+/g,"_")+".json";a.click();
+          }}>Download JSON</button>
+          <button className="tbtn" onClick={function(){ navigator.clipboard.writeText(JSON.stringify(outputsState.xeroData,null,2)).then(function(){alert("JSON copied");}); }}>Copy</button>
+        </div>
+        <div style={{fontFamily:"Courier New",fontSize:10,lineHeight:1.6,whiteSpace:"pre",background:"var(--bg)",border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",padding:12,maxHeight:400,overflow:"auto",color:"var(--accent-t)"}}>
+          {JSON.stringify(outputsState.xeroData,null,2)}
+        </div>
+      </div>
+    );
+
+    if (activeOutput === "form") return (
+      <div>
+        <div style={{marginBottom:10,display:"flex",gap:6}}>
+          <button className="tbtn" onClick={function(){ dispatch({type:"SET_PANEL",payload:"formi"}); }}>Open full Form I</button>
+          <button className="tbtn" onClick={function(){ dispatch({type:"SET_PANEL",payload:"workpaper"}); }}>Open workpaper</button>
+        </div>
+        {wp && (function(){
+          var t=wp.totals;
+          var fmt=function(v){return v>0?fmtAUD(v):"--";};
+          var fmtN=function(v){return v>0?"-"+fmtAUD(v):"--";};
+          var rows=[
+            {label:"Total assessable income",val:fmt(t.totalIncome),code:"Items 1-20",cls:"pos"},
+            {label:"Total deductions",val:fmtN(t.deductions+(t.ipPremium||0)),code:"D1-D15",cls:"neg"},
+            {label:"Taxable income",val:fmt(t.taxableIncome),code:"TI",cls:"pos",bold:true},
+            {label:"Gross income tax",val:fmtN(t.grossTax),code:"GT",cls:"neg"},
+            {label:"LITO",val:fmt(t.lito),code:"T1",cls:"pos"},
+            ...(t.lmito>0?[{label:"LMITO",val:fmt(t.lmito),code:"T2",cls:"pos"}]:[]),
+            {label:"Medicare levy",val:fmtN(t.medicare),code:"M1",cls:"neg"},
+            ...(t.phiClawback>0?[{label:"PHI clawback",val:fmtN(t.phiClawback),code:"M2",cls:"neg"}]:[]),
+            {label:"Net tax payable",val:fmtN(t.netTax),code:"NET",cls:"neg",bold:true},
+            {label:"Total withheld (PAYG + ESS Box C)",val:fmt(t.totalTaxWH),code:"WH",cls:"pos"},
+            {label:t.refund>=0?"Estimated refund":"Amount payable",val:fmtAUD(Math.abs(t.refund)),code:t.refund>=0?"REFUND":"PAYABLE",cls:t.refund>=0?"pos":"neg",bold:true},
+          ];
+          return (
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead><tr style={{background:"var(--surface2)"}}>
+                {["Item","Description","Amount"].map(function(h){return <th key={h} style={{padding:"6px 10px",textAlign:h==="Amount"?"right":"left",fontWeight:600,fontSize:11,fontFamily:"Courier New",borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>;})}
+              </tr></thead>
+              <tbody>{rows.map(function(r,i){return (
+                <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:r.bold?"var(--surface2)":"transparent"}}>
+                  <td style={{padding:"5px 10px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:80}}>{r.code}</td>
+                  <td style={{padding:"5px 10px",fontWeight:r.bold?600:400}}>{r.label}</td>
+                  <td style={{padding:"5px 10px",textAlign:"right",fontFamily:"Courier New",fontWeight:r.bold?700:500,color:r.cls==="pos"?"var(--accent)":r.cls==="neg"?"var(--danger)":"var(--muted)"}}>{r.val}</td>
+                </tr>
+              );})}</tbody>
+            </table>
+          );
+        })()}
+      </div>
+    );
+
+    if (activeOutput === "xlsx") return (
+      <div>
+        <div style={{marginBottom:10}}>
+          <button className="tbtn primary" onClick={function(){
+            if(wp) exportOutputsXLSX(wp, outputsState.exceptions, outputsState.clientRef||"Client", selectedFY, outputsState.deductData||[]);
+          }}>Download XLSX</button>
+        </div>
+        <div style={{fontSize:12,color:"var(--muted)",marginBottom:8}}>4-tab workbook:</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {["ITR Workpaper","Tax Calculation","Exceptions","Deduction Check"].map(function(tab){return (
+            <span key={tab} style={{padding:"3px 10px",background:"var(--accent-l)",border:"0.5px solid var(--accent)",borderRadius:20,fontSize:11,fontFamily:"Courier New",color:"var(--accent-t)"}}>{tab}</span>
+          );})}
+        </div>
+        <div style={{marginTop:8,fontSize:11,color:"var(--hint)"}}>Exceptions tab: {outputsState.exceptions.length} row{outputsState.exceptions.length!==1?"s":""} - one per flagged item.</div>
+      </div>
+    );
+
+    if (activeOutput === "exc") {
+      var exceptions = outputsState.exceptions || [];
+      return exceptions.length===0
+        ? <div className="notice info"><span>i</span><span>No exceptions flagged - return appears complete.</span></div>
+        : <div>{["flag","warn","info"].map(function(type){
+            var items=exceptions.filter(function(e){return e.type===type;});
+            if(!items.length) return null;
+            var lbls={flag:"Must resolve before lodging",warn:"Review recommended",info:"Notes"};
+            var colors={flag:"var(--danger)",warn:"var(--warn-t)",info:"var(--info-t)"};
+            return (
+              <div key={type} style={{marginBottom:14}}>
+                <div style={{fontSize:10,fontFamily:"Courier New",color:colors[type],fontWeight:700,letterSpacing:".4px",textTransform:"uppercase",marginBottom:6}}>{lbls[type]}</div>
+                {items.map(function(ex,i){return (
+                  <div key={i} style={{display:"flex",gap:8,padding:"8px 0",borderBottom:"0.5px solid var(--border)",fontSize:12,lineHeight:1.5}}>
+                    <span style={{flex:1}}>{ex.msg}<small style={{display:"block",fontSize:10,fontFamily:"Courier New",color:"var(--hint)",marginTop:2}}>{[ex.category,ex.ref,ex.action].filter(Boolean).join(" - ")}</small></span>
+                  </div>
+                );})}
+              </div>
+            );
+          })}</div>;
+    }
+
+    if (activeOutput === "deduct") {
+      var checks = outputsState.deductData || [];
+      if (!checks.length) return <div className="notice info"><span>i</span><span>No deductions to check.</span></div>;
+      var verdictColour={accepted:"var(--accent)",query:"var(--warn)",rejected:"var(--danger)"};
+      var verdictBg={accepted:"var(--accent-l)",query:"var(--warn-l)",rejected:"var(--danger-l)"};
+      var employers=inferEmployerContext(docs);
+      var cp=clientProfile;
+      return (
+        <div>
+          <div style={{padding:"8px 10px",background:"var(--surface2)",border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",marginBottom:12,fontSize:11}}>
+            <div style={{fontFamily:"Courier New",fontSize:10,color:"var(--hint)",marginBottom:4,textTransform:"uppercase",letterSpacing:".4px"}}>Context</div>
+            <div><span style={{color:"var(--muted)"}}>Employer (STP): </span><strong>{employers?employers.map(function(e){return e.name;}).join(", "):"not extracted"}</strong></div>
+            <div><span style={{color:"var(--muted)"}}>Occupation: </span><strong>{cp.occupation||"not stated"}</strong></div>
+            <div><span style={{color:"var(--muted)"}}>ATO job title: </span><strong style={{color:cp.atoJobTitle?"var(--accent)":"var(--hint)"}}>{cp.atoJobTitle||"not available - ATO SBR2 pending"}</strong></div>
+          </div>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{background:"var(--surface2)"}}>
+              {["Code","Deduction","Amount","Verdict","Action"].map(function(h){return <th key={h} style={{padding:"6px 10px",textAlign:h==="Amount"?"right":"left",fontSize:10,fontFamily:"Courier New",fontWeight:600,borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>;})}
+            </tr></thead>
+            <tbody>{checks.map(function(row,i){return (
+              <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:i%2===0?"var(--surface)":"transparent"}}>
+                <td style={{padding:"6px 10px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:50}}>{row.code}</td>
+                <td style={{padding:"6px 10px"}}><div style={{fontWeight:500}}>{row.label}</div><div style={{fontSize:10,color:"var(--muted)",marginTop:1}}>{row.reason}</div><div style={{fontSize:10,color:"var(--hint)",marginTop:1,fontFamily:"Courier New"}}>{row.ato_reference}</div></td>
+                <td style={{padding:"6px 10px",textAlign:"right",fontFamily:"Courier New",fontWeight:600,whiteSpace:"nowrap"}}>{row.amount>0?"$"+row.amount.toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}):"--"}</td>
+                <td style={{padding:"6px 10px",whiteSpace:"nowrap"}}><span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:20,fontSize:10,fontFamily:"Courier New",fontWeight:700,background:verdictBg[row.verdict]||"var(--surface2)",color:verdictColour[row.verdict]||"var(--muted)",border:"0.5px solid "+(verdictColour[row.verdict]||"var(--border-strong)")}}>{(row.verdict||"").toUpperCase()}</span></td>
+                <td style={{padding:"6px 10px",fontSize:11,color:"var(--muted)"}}>{row.action}</td>
+              </tr>
+            );})}</tbody>
+          </table>
+          <div style={{display:"flex",gap:10,marginTop:10,flexWrap:"wrap"}}>
+            {[{label:"Accepted",key:"accepted",color:"var(--accent)",bg:"var(--accent-l)"},{label:"Query",key:"query",color:"var(--warn-t)",bg:"var(--warn-l)"},{label:"Rejected",key:"rejected",color:"var(--danger)",bg:"var(--danger-l)"}].map(function(s){
+              var count=checks.filter(function(c){return c.verdict===s.key;}).length;
+              return count>0?<span key={s.key} style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontFamily:"Courier New",fontWeight:600,background:s.bg,color:s.color}}>{count} {s.label.toLowerCase()}</span>:null;
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  var activeLabel = (OUTPUT_DEFS.find(function(o){return o.key===activeOutput;})||{}).label || "";
+
+  return (
+    <div className="op-wrap">
+      {/* Top bar */}
+      <div className="op-topbar">
+        <div className="op-topbar-title">{activeLabel || "Step 3 - Output detail"}</div>
+        <button className="tbtn" onClick={function(){ dispatch({type:"SET_PANEL",payload:"drafter"}); }}>Back to drafter</button>
+        {allDone && (
+          <button className="tbtn" onClick={function(){
+            if(wp) exportOutputsXLSX(wp, outputsState.exceptions, outputsState.clientRef||"Client", selectedFY, outputsState.deductData||[]);
+          }}>Download XLSX</button>
+        )}
+      </div>
+
+      {/* Output nav tabs */}
+      <div style={{display:"flex",gap:0,borderBottom:"0.5px solid var(--border)",background:"var(--surface)",flexShrink:0,overflowX:"auto"}}>
+        {OUTPUT_DEFS.map(function(item){
+          var st=outputsState[item.key]||"idle";
+          var isActive=activeOutput===item.key;
+          return (
+            <div key={item.key}
+              onClick={function(){ if(st!=="idle"){ dispatch({type:"SET_ACTIVE_OUTPUT",payload:item.key}); } }}
+              style={{padding:"8px 14px",fontSize:11,fontFamily:"Courier New",cursor:st==="idle"?"default":"pointer",
+                borderBottom:isActive?"2px solid var(--accent)":"2px solid transparent",
+                color:isActive?"var(--accent-t)":st==="idle"?"var(--hint)":"var(--muted)",
+                fontWeight:isActive?600:400,whiteSpace:"nowrap",flexShrink:0,
+                display:"flex",alignItems:"center",gap:5}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:st==="done"?"var(--accent)":st==="loading"?"var(--warn)":st==="error"?"var(--danger)":"var(--border-strong)",flexShrink:0}}/>
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="op-body">
+        {/* Main content */}
+        <div className="op-outputs">
+          {renderOutputContent()}
+
+          {/* Verify bar when all done */}
+          {allDone && (
+            <div className="op-verify-bar" style={{marginTop:20}}>
+              <span style={{fontSize:12,fontWeight:600}}>Verify:</span>
+              {OUTPUT_DEFS.map(function(c){return (
+                <label key={c.key}>
+                  <input type="checkbox" checked={verifyChecks[c.key]||false} onChange={function(e){setVerifyChecks(function(prev){var n={...prev};n[c.key]=e.target.checked;return n;});}}/>
+                  {c.label.split(" ")[0]}
+                </label>
+              );})}
+              <div style={{flex:1}}/>
+              <button className="tbtn primary" disabled={!allVerified} onClick={function(){ alert("All outputs approved - proceed to Step 4."); }}>
+                Approve all and continue
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Review chat */}
+        <div className="op-review">
+          <div className="op-review-hdr">Review and query outputs</div>
+          <div className="op-review-msgs">
+            {reviewMsgs.length===0 && <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic",padding:"8px 0"}}>Ask anything about any output - calculations, exceptions, or deduction legitimacy.</div>}
+            {reviewMsgs.map(function(m,i){return (
+              <div key={i} className="op-review-msg">
+                <div className="op-review-role">{m.role}</div>
+                <div className={"op-review-body "+m.role}>{m.content}</div>
+              </div>
+            );})}
+            {reviewLoading && <div className="op-review-msg"><div className="op-review-role">assistant</div><div className="op-review-body assistant loading"><Spinner/>Reviewing...</div></div>}
+            <div ref={reviewBottomRef}/>
+          </div>
+          {reviewMsgs.length===0 && (
+            <div className="op-review-chips">
+              {REVIEW_CHIPS.map(function(c,i){return <button key={i} className="op-review-chip" onClick={function(){sendReview(c);}}>{c}</button>;})}
+            </div>
+          )}
+          <div className="op-review-input-row">
+            <textarea className="chat-input" rows={1}
+              placeholder="Ask about any output..."
+              value={reviewInput}
+              onChange={function(e){setReviewInput(e.target.value);e.target.style.height="auto";e.target.style.height=Math.min(e.target.scrollHeight,100)+"px";}}
+              onKeyDown={function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendReview(reviewInput);}}}
+            />
+            <button className="tbtn primary" onClick={function(){sendReview(reviewInput);}} disabled={reviewLoading}>-&gt;</button>
           </div>
         </div>
       </div>
