@@ -144,7 +144,7 @@ const API_URL = "https://api.anthropic.com/v1/messages";
 const SHAREPOINT_CONFIG = {
   clientId:       "966d239d-0828-49ae-a391-4d033fb820a1",       // Application (client) ID from Azure portal
   tenantId:       "common",                    // "common" = multi-tenant (any org)
-  redirectUri:    "http://localhost:5500",          // Must match exactly what is in Azure > Authentication
+  redirectUri: window.location.origin,       
   sharePointHost: "netorg20543515.sharepoint.com",  // e.g. navigatefinancial.sharepoint.com
   scopes: ["Files.Read", "Sites.Read.All", "User.Read"],
 };
