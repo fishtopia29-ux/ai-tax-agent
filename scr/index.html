@@ -506,7 +506,8 @@ const INITIAL = {
   selectedFY: DEFAULT_FY,
   configStatus: { loaded: false, fromRemote: false, lastUpdated: null, error: null },
   clientProfile: { hasSpouse: false, numDependants: 0, spouseIncome: 0, phiRebateReceived: 0, occupation: "", occupationSource: "manual", atoJobTitle: null, atoJobTitleStatus: "not_fetched" },
-  outputsState: { letter:"idle", xero:"idle", form:"idle", xlsx:"idle", exc:"idle", deduct:"idle", exceptions:[], wpData:null, deductData:[], xeroData:null, clientRef:"" },
+  outputsState: { letter:"idle", xero:"idle", form:"idle", xlsx:"idle", review:"idle", exceptions:[], wpData:null, deductData:[], xeroData:null, clientRef:"" },
+  adjustments: [],
   activeOutput: null,
   drafterAutoPrompt: null,
 };
@@ -545,6 +546,9 @@ function reducer(state, action) {
     case "SET_OUTPUTS_STATE":   return { ...state, outputsState: { ...state.outputsState, ...action.payload } };
     case "SET_ACTIVE_OUTPUT":   return { ...state, activeOutput: action.payload };
     case "SET_DRAFTER_AUTO_PROMPT": return { ...state, drafterAutoPrompt: action.payload };
+    case "ADD_ADJUSTMENT":      return { ...state, adjustments: [...state.adjustments, action.payload] };
+    case "REVERT_ADJUSTMENT":   return { ...state, adjustments: state.adjustments.filter(function(a){ return a.id !== action.payload; }) };
+    case "CLEAR_ADJUSTMENTS":   return { ...state, adjustments: [] };
     default: return state;
   }
 }
@@ -1084,8 +1088,8 @@ function Sidebar({ state, dispatch, onExport }) {
           { key:"xero",    label:"Xero JSON - ATO lodgement" },
           { key:"form",    label:"ATO completed template" },
           { key:"xlsx",    label:"Calculations spreadsheet" },
-          { key:"exc",     label:"Exceptions & areas of interest" },
-          { key:"deduct",  label:"Deduction legitimacy check" },
+          { key:"review",  label:"Review & Risk" },
+          { key:"adjust",  label:"Adjustments" },
         ].map(item => {
           const st = state.outputsState[item.key] || "idle";
           const isActive = panel === "output-detail" && state.activeOutput === item.key;
@@ -3017,6 +3021,292 @@ async function checkDeductionLegitimacy(apiKey, state, wpData) {
   catch(e) { return [{code:"?",label:"Parse error",amount:0,verdict:"query",confidence:"low",reason:"Legitimacy check could not be parsed.",ato_reference:"s.8-1 ITAA 1997",action:"Manual review required"}]; }
 }
 
+// ─────────────────────────────────────────
+//  ADJUSTMENTS — apply natural-language override layer
+// ─────────────────────────────────────────
+
+// Compute adjusted totals by applying all active adjustment overrides on top of base docs
+function computeAdjustedTotals(docs, clientProfile, selectedFY, adjustments) {
+  const base = computeTotals(docs, clientProfile, selectedFY);
+  let overrides = {
+    deductions: base.deductions,
+    ipPremium: base.ipPremium,
+    paygIncome: base.paygIncome,
+    rentalIncome: base.rentalIncome,
+    rentalExp: base.rentalExp,
+    capitalGains: base.capitalGains,
+  };
+  // Apply each adjustment's delta in order
+  (adjustments || []).forEach(function(adj) {
+    if (adj.delta) {
+      Object.keys(adj.delta).forEach(function(k) {
+        if (overrides[k] !== undefined) overrides[k] = adj.delta[k];
+      });
+    }
+  });
+  // Re-run tax calc with overrides applied
+  const fy = selectedFY || DEFAULT_FY;
+  const { hasSpouse=false, numDependants=0, spouseIncome=0, phiRebateReceived=0 } = clientProfile || {};
+  const netRental = overrides.rentalIncome - overrides.rentalExp;
+  const totalIncome = overrides.paygIncome + (base.essBoxF||0) + (base.essBoxD||0) + (base.essBoxE||0) + (base.ipBenefit||0) + (netRental > 0 ? netRental : 0) + overrides.capitalGains;
+  const taxableIncome = Math.max(0, totalIncome - overrides.deductions - (overrides.ipPremium||0) + (netRental < 0 ? netRental : 0));
+  const grossTax = calcTax(taxableIncome, fy);
+  const lito = calcLITO(taxableIncome, fy);
+  const lmito = calcLMITO(taxableIncome, fy);
+  const familyATI = taxableIncome + spouseIncome;
+  const medicare = calcMedicareLevy(taxableIncome, familyATI, numDependants, hasSpouse, fy);
+  const phiClawback = calcPHIClawback(familyATI, phiRebateReceived, hasSpouse, numDependants, fy);
+  const netTax = Math.max(0, grossTax - lito - lmito + medicare + phiClawback);
+  const totalTaxWH = base.totalTaxWH;
+  const refund = totalTaxWH - netTax;
+  return { ...base, ...overrides, totalIncome, taxableIncome, grossTax, lito, lmito, medicare, phiClawback, netTax, totalTaxWH, refund, netRental };
+}
+
+// Send instruction to Claude, get back a structured delta + human summary
+async function interpretAdjustment(apiKey, instruction, currentTotals, docs, selectedFY) {
+  const fy = getFYLabel(selectedFY);
+  const system = `You are an Australian tax return adjustment assistant. The accountant will give you a natural language instruction to change a figure in the ITR. You must:
+1. Identify which field(s) to change from: deductions, ipPremium, paygIncome, rentalIncome, rentalExp, capitalGains
+2. Calculate the new value based on the instruction and current figures
+3. Return ONLY a JSON object — no markdown, no explanation outside JSON.
+
+Current figures (all AUD):
+- deductions (work-related): ${currentTotals.deductions.toFixed(2)}
+- ipPremium (income protection D15): ${(currentTotals.ipPremium||0).toFixed(2)}
+- paygIncome (salary Item 1): ${currentTotals.paygIncome.toFixed(2)}
+- rentalIncome: ${currentTotals.rentalIncome.toFixed(2)}
+- rentalExp: ${currentTotals.rentalExp.toFixed(2)}
+- capitalGains: ${currentTotals.capitalGains.toFixed(2)}
+
+Return format:
+{"delta":{"fieldName":newValue},"summary":"Human-readable description of what changed, e.g. Mobile phone allowance reduced from 100% to 70% — deductions reduced by $X"}
+
+Rules:
+- delta must contain ONLY the field(s) that change, with their new absolute values
+- If instruction references a percentage change on a deduction item, calculate the new deduction total accordingly
+- If instruction says remove a deduction, subtract that amount from deductions total
+- If instruction adds a deduction, add it to deductions total
+- summary must state old value → new value clearly
+- If you cannot interpret the instruction, return {"delta":{},"summary":"Could not interpret: please rephrase"}`;
+
+  const raw = await callClaude(apiKey, {
+    system,
+    messages: [{ role:"user", content: "FY" + fy + " adjustment instruction: " + instruction }],
+    maxTokens: 400,
+  });
+  try {
+    const clean = raw.replace(/\`\`\`json|\`\`\`/g,"").trim();
+    return JSON.parse(clean);
+  } catch(e) {
+    return { delta:{}, summary:"Parse error — please rephrase the instruction." };
+  }
+}
+
+// ─────────────────────────────────────────
+//  ADJUSTMENTS PANEL COMPONENT
+// ─────────────────────────────────────────
+function AdjustmentsPanel({ state, dispatch, outputsState }) {
+  const { apiKey, adjustments, docs, clientProfile, selectedFY } = state;
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [regenLoading, setRegenLoading] = useState(false);
+  const inputRef = useRef(null);
+
+  const baseTotals = computeTotals(docs, clientProfile, selectedFY);
+  const adjTotals  = computeAdjustedTotals(docs, clientProfile, selectedFY, adjustments);
+
+  const CHIPS = [
+    "Reduce mobile phone claim to 70% and recalculate",
+    "Remove car expense deduction and recalculate",
+    "Add self-education expense of $500",
+    "Reduce WFH deduction to 60% claimable",
+    "Remove the uniform/laundry deduction",
+    "Change internet claim to 50%",
+  ];
+
+  async function handleApply() {
+    if (!apiKey) { alert("Please enter your Anthropic API key."); return; }
+    const instr = input.trim();
+    if (!instr) return;
+    setInput("");
+    setLoading(true);
+    try {
+      const result = await interpretAdjustment(apiKey, instr, adjTotals, docs, selectedFY);
+      if (result.delta && Object.keys(result.delta).length > 0) {
+        // Compute before/after for the log
+        const before = {};
+        const after = {};
+        Object.keys(result.delta).forEach(function(k) {
+          before[k] = adjTotals[k] !== undefined ? adjTotals[k] : 0;
+          after[k]  = result.delta[k];
+        });
+        dispatch({
+          type: "ADD_ADJUSTMENT",
+          payload: {
+            id: Date.now().toString(),
+            instruction: instr,
+            summary: result.summary,
+            delta: result.delta,
+            before,
+            after,
+            timestamp: new Date().toLocaleTimeString("en-AU"),
+          }
+        });
+        // Auto-regenerate XLSX and Review & Risk
+        await regenReviewOutputs(result.delta, result.summary);
+      } else {
+        alert(result.summary || "Could not interpret instruction — please rephrase.");
+      }
+    } catch(e) {
+      alert("Error: " + e.message);
+    }
+    setLoading(false);
+  }
+
+  async function regenReviewOutputs(latestDelta, latestSummary) {
+    setRegenLoading(true);
+    // Rebuild wp with adjusted totals (include new delta)
+    const allAdj = [...adjustments, { delta: latestDelta }];
+    const newTotals = computeAdjustedTotals(docs, clientProfile, selectedFY, allAdj);
+    const wp = {
+      totals: { ...newTotals, ipPremium: newTotals.ipPremium||0, essTaxWH: newTotals.essTaxWH||0, taxWithheld: newTotals.taxWithheld||0 },
+      flags: [],
+      sections: [],
+      fy: getFYLabel(selectedFY),
+    };
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData: wp, xlsx:"done", review:"loading" }});
+    try {
+      const [excRes, deductRes] = await Promise.allSettled([
+        generateExceptions(apiKey, { ...state, adjustments: allAdj }, wp),
+        checkDeductionLegitimacy(apiKey, { ...state, adjustments: allAdj }, wp),
+      ]);
+      const aiExc  = excRes.status==="fulfilled"  ? excRes.value  : [];
+      const allExc = mergeExceptions(wp.flags, aiExc);
+      const deductData = deductRes.status==="fulfilled" ? deductRes.value : [];
+      dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData, wpData:wp }});
+    } catch(e) {
+      dispatch({ type:"SET_OUTPUTS_STATE", payload:{ review:"error" }});
+    }
+    setRegenLoading(false);
+  }
+
+  async function handleRevert(id) {
+    dispatch({ type:"REVERT_ADJUSTMENT", payload: id });
+    // Recalc without that adjustment — regenerate silently
+    const remaining = adjustments.filter(function(a){ return a.id !== id; });
+    const newTotals = computeAdjustedTotals(docs, clientProfile, selectedFY, remaining);
+    const wp = {
+      totals: { ...newTotals, ipPremium: newTotals.ipPremium||0, essTaxWH: newTotals.essTaxWH||0, taxWithheld: newTotals.taxWithheld||0 },
+      flags: [], sections: [], fy: getFYLabel(selectedFY),
+    };
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData: wp, xlsx:"done", review:"loading" }});
+    try {
+      const [excRes, deductRes] = await Promise.allSettled([
+        generateExceptions(apiKey, { ...state, adjustments: remaining }, wp),
+        checkDeductionLegitimacy(apiKey, { ...state, adjustments: remaining }, wp),
+      ]);
+      const aiExc = excRes.status==="fulfilled" ? excRes.value : [];
+      dispatch({ type:"SET_OUTPUTS_STATE", payload:{
+        exceptions: mergeExceptions(wp.flags, aiExc),
+        review:"done",
+        deductData: deductRes.status==="fulfilled" ? deductRes.value : [],
+        wpData: wp,
+      }});
+    } catch(e) {
+      dispatch({ type:"SET_OUTPUTS_STATE", payload:{ review:"error" }});
+    }
+  }
+
+  const fmt = function(v){ return v >= 0 ? fmtAUD(v) : "-" + fmtAUD(Math.abs(v)); };
+  const diff = function(a, b){ const d = a - b; return d === 0 ? null : (d > 0 ? "+" : "") + fmtAUD(d); };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:0,height:"100%"}}>
+
+      {/* ── Refund/payable impact bar ── */}
+      <div style={{padding:"10px 16px",background:"var(--surface2)",border:"0.5px solid var(--border)",borderRadius:"var(--rs)",marginBottom:14,display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{fontSize:11,color:"var(--muted)"}}>Impact on outcome</div>
+        <div style={{flex:1,display:"flex",gap:20,flexWrap:"wrap"}}>
+          <span style={{fontSize:12}}><span style={{color:"var(--muted)"}}>Taxable income: </span>
+            <strong>{fmtAUD(adjTotals.taxableIncome)}</strong>
+            {adjustments.length>0 && adjTotals.taxableIncome!==baseTotals.taxableIncome &&
+              <span style={{fontSize:11,marginLeft:5,color:adjTotals.taxableIncome<baseTotals.taxableIncome?"var(--accent)":"var(--danger)"}}>
+                ({diff(adjTotals.taxableIncome, baseTotals.taxableIncome)})
+              </span>}
+          </span>
+          <span style={{fontSize:12}}><span style={{color:"var(--muted)"}}>{adjTotals.refund>=0?"Refund:":"Payable:"} </span>
+            <strong style={{color:adjTotals.refund>=0?"var(--accent)":"var(--danger)"}}>{fmtAUD(Math.abs(adjTotals.refund))}</strong>
+            {adjustments.length>0 && adjTotals.refund!==baseTotals.refund &&
+              <span style={{fontSize:11,marginLeft:5,color:adjTotals.refund>baseTotals.refund?"var(--accent)":"var(--danger)"}}>
+                ({diff(adjTotals.refund, baseTotals.refund)})
+              </span>}
+          </span>
+        </div>
+        {regenLoading && <span style={{fontSize:11,color:"var(--muted)",fontStyle:"italic"}}><Spinner/>Updating review...</span>}
+        {adjustments.length>0 && <button className="tbtn" style={{fontSize:10}} onClick={function(){ dispatch({type:"CLEAR_ADJUSTMENTS"}); }}>Reset all</button>}
+      </div>
+
+      {/* ── Change log ── */}
+      {adjustments.length > 0 && (
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:10,fontFamily:"Courier New",color:"var(--muted)",fontWeight:700,letterSpacing:".6px",textTransform:"uppercase",marginBottom:6}}>Change log</div>
+          {adjustments.map(function(adj, i) {
+            return (
+              <div key={adj.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 10px",background:i%2===0?"var(--surface)":"var(--surface2)",border:"0.5px solid var(--border)",borderRadius:"var(--rs)",marginBottom:4,fontSize:12}}>
+                <span style={{fontFamily:"Courier New",fontSize:10,color:"var(--hint)",flexShrink:0,marginTop:2}}>{String(i+1).padStart(2,"0")}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:500,marginBottom:2}}>{adj.instruction}</div>
+                  <div style={{fontSize:11,color:"var(--accent)",fontFamily:"Courier New"}}>{adj.summary}</div>
+                  {adj.before && (
+                    <div style={{fontSize:10,color:"var(--hint)",marginTop:2,display:"flex",gap:10,flexWrap:"wrap"}}>
+                      {Object.keys(adj.before).map(function(k){
+                        return <span key={k}>{k}: <span style={{textDecoration:"line-through"}}>{fmtAUD(adj.before[k])}</span> → <strong>{fmtAUD(adj.after[k])}</strong></span>;
+                      })}
+                    </div>
+                  )}
+                </div>
+                <span style={{fontSize:10,fontFamily:"Courier New",color:"var(--hint)",flexShrink:0}}>{adj.timestamp}</span>
+                <button className="tbtn" style={{fontSize:10,padding:"2px 8px",flexShrink:0}} onClick={function(){ handleRevert(adj.id); }}>↩ Revert</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {adjustments.length === 0 && (
+        <div style={{marginBottom:12}}>
+          <div className="notice info"><span>ℹ</span><span>No adjustments applied. Original extracted figures are in use. Type an instruction below to make changes.</span></div>
+        </div>
+      )}
+
+      {/* ── Quick chips ── */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+        {CHIPS.map(function(c,i){return (
+          <button key={i} className="op-review-chip" onClick={function(){ setInput(c); inputRef.current && inputRef.current.focus(); }}>{c}</button>
+        );})}
+      </div>
+
+      {/* ── Input ── */}
+      <div style={{display:"flex",gap:6,alignItems:"flex-end"}}>
+        <textarea ref={inputRef} className="chat-input" rows={2}
+          placeholder="e.g. Change mobile phone allowance from 100% to 70% and recalculate"
+          value={input}
+          onChange={function(e){ setInput(e.target.value); }}
+          onKeyDown={function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handleApply(); } }}
+          style={{flex:1,resize:"none"}}
+        />
+        <button className="tbtn primary" onClick={handleApply} disabled={loading||!input.trim()}
+          style={{padding:"8px 14px",alignSelf:"stretch"}}>
+          {loading ? <><Spinner/>Applying...</> : "Apply →"}
+        </button>
+      </div>
+      <div style={{fontSize:10,color:"var(--hint)",marginTop:4}}>
+        Review &amp; Risk panel updates automatically after each change. XLSX recalculates instantly. Letter, Xero, ATO form unchanged until final save.
+      </div>
+    </div>
+  );
+}
+
 function buildOutputsReviewContext(state, wpData, exceptions) {
   if (!wpData) return "No outputs generated yet.";
   const t = wpData.totals;
@@ -3035,7 +3325,7 @@ async function triggerOutputGeneration(state, dispatch) {
   dispatch({ type:"SET_PANEL", payload:"output-detail" });
   dispatch({ type:"SET_ACTIVE_OUTPUT", payload:"letter" });
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{
-    letter:"loading", xero:"loading", form:"loading", xlsx:"loading", exc:"loading", deduct:"loading",
+    letter:"loading", xero:"loading", form:"loading", xlsx:"loading", review:"loading",
     exceptions:[], wpData:null, deductData:[], xeroData:null
   }});
   // Use computeTotals (the native calculation function in this codebase)
@@ -3099,9 +3389,9 @@ async function triggerOutputGeneration(state, dispatch) {
     const aiExc = excRes.status==="fulfilled" ? excRes.value : [];
     const allExc = mergeExceptions(wp.flags, aiExc);
     const deductData = deductRes.status==="fulfilled" ? deductRes.value : [];
-    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, exc:"done", deductData:deductData, deduct:"done" }});
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData:deductData }});
   } catch(e) {
-    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exc:"error", deduct:"error" }});
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ review:"error" }});
   }
 }
 
@@ -3117,7 +3407,7 @@ function OutputDetailPanel({ state, dispatch }) {
   const reviewBottomRef = useRef(null);
   useEffect(function(){ reviewBottomRef.current && reviewBottomRef.current.scrollIntoView({behavior:"smooth"}); }, [reviewMsgs, reviewLoading]);
   const wp = outputsState.wpData;
-  const allDone = ["letter","xero","form","xlsx","exc","deduct"].every(function(k){ return outputsState[k]==="done"||outputsState[k]==="error"; });
+  const allDone = ["letter","xero","form","xlsx","review"].every(function(k){ return outputsState[k]==="done"||outputsState[k]==="error"; });
   const sendReview = useCallback(async function(text) {
     if (!apiKey || !text.trim()) return;
     const clean = scrubPII(text.trim());
@@ -3139,8 +3429,8 @@ function OutputDetailPanel({ state, dispatch }) {
     { key:"xero",    label:"Xero JSON - ATO lodgement" },
     { key:"form",    label:"ATO completed template" },
     { key:"xlsx",    label:"Calculations spreadsheet" },
-    { key:"exc",     label:"Exceptions & areas of interest" },
-    { key:"deduct",  label:"Deduction legitimacy check" },
+    { key:"review",  label:"Review & Risk" },
+    { key:"adjust",  label:"Adjustments" },
   ];
   const REVIEW_CHIPS = ["Why is the LITO this amount?","Explain the ESS calculation","What deductions might be missing?","Is the Medicare levy correct?","Explain the refund figure","Which exceptions are most urgent?"];
 
@@ -3230,57 +3520,86 @@ function OutputDetailPanel({ state, dispatch }) {
         <div style={{marginTop:8,fontSize:11,color:"var(--hint)"}}>Exceptions tab: {outputsState.exceptions.length} row{outputsState.exceptions.length!==1?"s":""} - one per flagged item.</div>
       </div>
     );
-    if (activeOutput === "exc") {
+    // ── MERGED: Review & Risk ──
+    if (activeOutput === "review") {
       const exceptions = outputsState.exceptions || [];
-      return exceptions.length===0
-        ? <div className="notice info"><span>i</span><span>No exceptions flagged.</span></div>
-        : <div>{["flag","warn","info"].map(function(type){
-            const items=exceptions.filter(function(e){return e.type===type;});
-            if(!items.length) return null;
-            const lbls={flag:"Must resolve before lodging",warn:"Review recommended",info:"Notes"};
-            const colors={flag:"var(--danger)",warn:"var(--warn-t)",info:"var(--info-t)"};
-            return (
-              <div key={type} style={{marginBottom:14}}>
-                <div style={{fontSize:10,fontFamily:"Courier New",color:colors[type],fontWeight:700,letterSpacing:".4px",textTransform:"uppercase",marginBottom:6}}>{lbls[type]}</div>
-                {items.map(function(ex,i){return (
-                  <div key={i} style={{display:"flex",gap:8,padding:"8px 0",borderBottom:"0.5px solid var(--border)",fontSize:12,lineHeight:1.5}}>
-                    <span style={{flex:1}}>{ex.msg}<small style={{display:"block",fontSize:10,fontFamily:"Courier New",color:"var(--hint)",marginTop:2}}>{[ex.category,ex.ref,ex.action].filter(Boolean).join(" - ")}</small></span>
-                  </div>
-                );})}
-              </div>
-            );
-          })}</div>;
-    }
-    if (activeOutput === "deduct") {
       const checks = outputsState.deductData || [];
-      if (!checks.length) return <div className="notice info"><span>i</span><span>No deductions to check.</span></div>;
+      const employers = inferEmployerContext(docs);
+      const cp = clientProfile;
       const verdictColour={accepted:"var(--accent)",query:"var(--warn)",rejected:"var(--danger)"};
       const verdictBg={accepted:"var(--accent-l)",query:"var(--warn-l)",rejected:"var(--danger-l)"};
-      const employers=inferEmployerContext(docs);
-      const cp=clientProfile;
+      const flagCount = exceptions.filter(function(e){return e.type==="flag";}).length;
+      const warnCount = exceptions.filter(function(e){return e.type==="warn";}).length;
+      const queryCount = checks.filter(function(r){return r.verdict==="query"||r.verdict==="rejected";}).length;
       return (
         <div>
-          <div style={{padding:"8px 10px",background:"var(--surface2)",border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",marginBottom:12,fontSize:11}}>
-            <div><span style={{color:"var(--muted)"}}>Employer (STP): </span><strong>{employers?employers.map(function(e){return e.name;}).join(", "):"not extracted"}</strong></div>
-            <div><span style={{color:"var(--muted)"}}>Occupation: </span><strong>{cp.occupation||"not stated"}</strong></div>
-            <div><span style={{color:"var(--muted)"}}>ATO job title: </span><strong style={{color:cp.atoJobTitle?"var(--accent)":"var(--hint)"}}>{cp.atoJobTitle||"not available - ATO SBR2 pending"}</strong></div>
+          {/* Summary bar */}
+          <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+            {flagCount>0 && <div style={{padding:"6px 12px",background:"var(--danger-l)",border:"0.5px solid var(--danger)",borderRadius:"var(--rs)",fontSize:11,fontFamily:"Courier New",color:"var(--danger)",fontWeight:700}}>{flagCount} MUST FIX</div>}
+            {warnCount>0 && <div style={{padding:"6px 12px",background:"var(--warn-l)",border:"0.5px solid var(--warn)",borderRadius:"var(--rs)",fontSize:11,fontFamily:"Courier New",color:"var(--warn-t)",fontWeight:700}}>{warnCount} REVIEW</div>}
+            {queryCount>0 && <div style={{padding:"6px 12px",background:"var(--warn-l)",border:"0.5px solid var(--warn)",borderRadius:"var(--rs)",fontSize:11,fontFamily:"Courier New",color:"var(--warn-t)",fontWeight:700}}>{queryCount} DEDUCTION QUERIES</div>}
+            {flagCount===0&&warnCount===0&&queryCount===0 && <div style={{padding:"6px 12px",background:"var(--accent-l)",border:"0.5px solid var(--accent)",borderRadius:"var(--rs)",fontSize:11,fontFamily:"Courier New",color:"var(--accent-t)",fontWeight:700}}>✓ No issues found</div>}
           </div>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-            <thead><tr style={{background:"var(--surface2)"}}>
-              {["Code","Deduction","Amount","Verdict","Action"].map(function(h){return <th key={h} style={{padding:"6px 10px",textAlign:h==="Amount"?"right":"left",fontSize:10,fontFamily:"Courier New",fontWeight:600,borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>;})}
-            </tr></thead>
-            <tbody>{checks.map(function(row,i){return (
-              <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:i%2===0?"var(--surface)":"transparent"}}>
-                <td style={{padding:"6px 10px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:50}}>{row.code}</td>
-                <td style={{padding:"6px 10px"}}><div style={{fontWeight:500}}>{row.label}</div><div style={{fontSize:10,color:"var(--muted)",marginTop:1}}>{row.reason}</div></td>
-                <td style={{padding:"6px 10px",textAlign:"right",fontFamily:"Courier New",fontWeight:600}}>{row.amount>0?"$"+row.amount.toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}):"--"}</td>
-                <td style={{padding:"6px 10px"}}><span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:20,fontSize:10,fontFamily:"Courier New",fontWeight:700,background:verdictBg[row.verdict]||"var(--surface2)",color:verdictColour[row.verdict]||"var(--muted)",border:"0.5px solid "+(verdictColour[row.verdict]||"var(--border-strong)")}}>{(row.verdict||"").toUpperCase()}</span></td>
-                <td style={{padding:"6px 10px",fontSize:11,color:"var(--muted)"}}>{row.action}</td>
-              </tr>
-            );})}</tbody>
-          </table>
+
+          {/* Section 1: Return-level exceptions */}
+          <div style={{fontSize:10,fontFamily:"Courier New",color:"var(--muted)",fontWeight:700,letterSpacing:".6px",textTransform:"uppercase",padding:"6px 0 8px",borderBottom:"1.5px solid var(--border-strong)",marginBottom:10}}>Return Exceptions &amp; Areas of Interest</div>
+          {exceptions.length===0
+            ? <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic",marginBottom:16}}>No exceptions flagged.</div>
+            : <div style={{marginBottom:20}}>{["flag","warn","info"].map(function(type){
+                const items=exceptions.filter(function(e){return e.type===type;});
+                if(!items.length) return null;
+                const lbls={flag:"Must resolve before lodging",warn:"Review recommended",info:"Notes"};
+                const colors={flag:"var(--danger)",warn:"var(--warn-t)",info:"var(--info-t)"};
+                return (
+                  <div key={type} style={{marginBottom:12}}>
+                    <div style={{fontSize:10,fontFamily:"Courier New",color:colors[type],fontWeight:700,letterSpacing:".4px",textTransform:"uppercase",marginBottom:5}}>{lbls[type]}</div>
+                    {items.map(function(ex,i){return (
+                      <div key={i} style={{display:"flex",gap:8,padding:"7px 0",borderBottom:"0.5px solid var(--border)",fontSize:12,lineHeight:1.5}}>
+                        <span style={{color:colors[type],flexShrink:0,fontSize:13}}>
+                          {type==="flag"?"⛔":type==="warn"?"⚠":"ℹ"}
+                        </span>
+                        <span style={{flex:1}}>{ex.msg}
+                          <small style={{display:"block",fontSize:10,fontFamily:"Courier New",color:"var(--hint)",marginTop:2}}>
+                            {[ex.category,ex.ref,ex.action].filter(Boolean).join(" · ")}
+                          </small>
+                        </span>
+                      </div>
+                    );})}
+                  </div>
+                );
+              })}</div>
+          }
+
+          {/* Section 2: Deduction legitimacy */}
+          <div style={{fontSize:10,fontFamily:"Courier New",color:"var(--muted)",fontWeight:700,letterSpacing:".6px",textTransform:"uppercase",padding:"6px 0 8px",borderBottom:"1.5px solid var(--border-strong)",marginBottom:10}}>Deduction Legitimacy Check</div>
+          <div style={{padding:"7px 10px",background:"var(--surface2)",border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",marginBottom:10,fontSize:11,display:"flex",gap:20,flexWrap:"wrap"}}>
+            <span><span style={{color:"var(--muted)"}}>Employer (STP): </span><strong>{employers?employers.map(function(e){return e.name;}).join(", "):"not extracted"}</strong></span>
+            <span><span style={{color:"var(--muted)"}}>Occupation: </span><strong>{cp.occupation||"not stated"}</strong></span>
+            <span><span style={{color:"var(--muted)"}}>ATO title: </span><strong style={{color:cp.atoJobTitle?"var(--accent)":"var(--hint)"}}>{cp.atoJobTitle||"pending SBR2"}</strong></span>
+          </div>
+          {checks.length===0
+            ? <div style={{fontSize:12,color:"var(--hint)",fontStyle:"italic"}}>No deductions to check.</div>
+            : <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead><tr style={{background:"var(--surface2)"}}>
+                  {["Code","Deduction","Amount","Verdict","Action"].map(function(h){return <th key={h} style={{padding:"6px 10px",textAlign:h==="Amount"?"right":"left",fontSize:10,fontFamily:"Courier New",fontWeight:600,borderBottom:"0.5px solid var(--border-strong)"}}>{h}</th>;})}
+                </tr></thead>
+                <tbody>{checks.map(function(row,i){return (
+                  <tr key={i} style={{borderBottom:"0.5px solid var(--border)",background:i%2===0?"var(--surface)":"transparent"}}>
+                    <td style={{padding:"6px 10px",fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,width:50}}>{row.code}</td>
+                    <td style={{padding:"6px 10px"}}><div style={{fontWeight:500}}>{row.label}</div><div style={{fontSize:10,color:"var(--muted)",marginTop:1}}>{row.reason}</div></td>
+                    <td style={{padding:"6px 10px",textAlign:"right",fontFamily:"Courier New",fontWeight:600}}>{row.amount>0?"$"+row.amount.toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2}):"--"}</td>
+                    <td style={{padding:"6px 10px"}}><span style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 8px",borderRadius:20,fontSize:10,fontFamily:"Courier New",fontWeight:700,background:verdictBg[row.verdict]||"var(--surface2)",color:verdictColour[row.verdict]||"var(--muted)",border:"0.5px solid "+(verdictColour[row.verdict]||"var(--border-strong)")}}>{(row.verdict||"").toUpperCase()}</span></td>
+                    <td style={{padding:"6px 10px",fontSize:11,color:"var(--muted)"}}>{row.action}</td>
+                  </tr>
+                );})}</tbody>
+              </table>
+          }
         </div>
       );
+    }
+    // ── Adjustments panel ──
+    if (activeOutput === "adjust") {
+      return <AdjustmentsPanel state={state} dispatch={dispatch} outputsState={outputsState} />;
     }
     return null;
   }
@@ -3299,8 +3618,12 @@ function OutputDetailPanel({ state, dispatch }) {
       </div>
       <div style={{display:"flex",gap:0,borderBottom:"0.5px solid var(--border)",background:"var(--surface)",flexShrink:0,overflowX:"auto"}}>
         {OUTPUT_DEFS.map(function(item){
-          const st=outputsState[item.key]||"idle";
+          // "adjust" tab is always accessible once any output is done
+          const st = item.key === "adjust"
+            ? (allDone ? "done" : "idle")
+            : (outputsState[item.key]||"idle");
           const isActive=activeOutput===item.key;
+          const adjCount = item.key==="adjust" && state.adjustments && state.adjustments.length;
           return (
             <div key={item.key}
               onClick={function(){ if(st!=="idle"){ dispatch({type:"SET_ACTIVE_OUTPUT",payload:item.key}); } }}
@@ -3311,6 +3634,7 @@ function OutputDetailPanel({ state, dispatch }) {
                 display:"flex",alignItems:"center",gap:5}}>
               <span style={{width:6,height:6,borderRadius:"50%",background:st==="done"?"var(--accent)":st==="loading"?"var(--warn)":st==="error"?"var(--danger)":"var(--border-strong)",flexShrink:0}}/>
               {item.label}
+              {adjCount ? <span style={{background:"var(--warn)",color:"#fff",borderRadius:20,fontSize:9,padding:"1px 5px",fontWeight:700}}>{adjCount}</span> : null}
             </div>
           );
         })}
