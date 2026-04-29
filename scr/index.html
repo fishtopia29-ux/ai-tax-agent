@@ -2131,7 +2131,9 @@ function VaultPanel({ state, dispatch, onDraft }) {
     setProcessing(false);
   }, [apiKey, docs, dispatch]);
 
-  const hasDone = docs.some(d => d.status === "done" && d.extracted && !d.extracted.error);
+  const hasDone = docs.length > 0
+    && docs.every(d => d.status === "done" || d.status === "error")
+    && docs.some(d => d.status === "done" && d.extracted && !d.extracted.error);
 
   return (
     <div className="panel">
