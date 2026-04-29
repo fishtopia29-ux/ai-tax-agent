@@ -2414,11 +2414,12 @@ function TaxReturnRenderer({ content }) {
           <div style={secHdr}>Review &amp; Risk</div>
           <ul style={{ margin:0, padding:"6px 0 6px 0", listStyle:"none" }}>
             {(() => {
-              const lines = reviewRaw.split("\n").filter(l => l.trim());
-              return lines.map((note, i) => {
+              const raw = reviewRaw.split("\n").filter(l => l.trim());
+              const rank = l => /^\[FLAG\]/i.test(l) ? 0 : /^\[WARN\]/i.test(l) ? 1 : 2;
+              const sorted = [...raw].sort((a, b) => rank(a) - rank(b));
+              return sorted.map((note, i) => {
                 const isFlag = /^\[FLAG\]/i.test(note);
                 const isWarn = /^\[WARN\]/i.test(note);
-                const isInfo = /^\[INFO\]/i.test(note);
                 const icon   = isFlag ? "⛔" : isWarn ? "⚠" : "ℹ";
                 const color  = isFlag ? "var(--danger)" : isWarn ? "var(--warn)" : "var(--info)";
                 const clean  = note.replace(/^\[(FLAG|WARN|INFO)\]\s*/i, "").replace(/^[-•*⚑►▸·]\s*/, "").trim();
@@ -2465,6 +2466,12 @@ function DrafterPanel({ state, dispatch }) {
     dispatch({ type:"ADD_DRAFTER_MSG", payload:{ role:"user", content:clean } });
     setLoading(true);
     const ctx = buildVaultContext(docs, chatMessages, selectedFY);
+    // Build full deduction line-item breakdown for drafter context
+    const deductLines = buildDeductionLineItems(docs, computeTotals(docs, clientProfile, selectedFY));
+    const deductCtx = deductLines.length
+      ? "DEDUCTION LINE ITEMS (individual items — use these for any adjustment requests):\n" +
+        deductLines.map((l,i) => `  ${i+1}. ${l.code} "${l.label}" $${l.amount.toFixed(2)} (source: ${l.source})`).join("\n")
+      : "DEDUCTION LINE ITEMS: no individual items extracted — only aggregated totals available.";
     // Pass pre-computed sidebar totals to drafter — prevents Claude re-deriving from raw docs
     const t = computeTotals(docs, clientProfile, selectedFY);
     const computedCtx = `PRE-COMPUTED TOTALS (use these exact figures — do not re-derive from documents):
@@ -2497,6 +2504,7 @@ IP premium (D15 deduction): ${(t.ipPremium||0).toFixed(2)}`;
     const system = `You are AusTax, an expert Australian tax accountant. FY${fyLabel}.
 DOCUMENTS:
 ${ctx}
+${deductCtx}
 PROFILE: ${profileCtx}
 ${computedCtx}
 RATES FY${fyLabel}: ${bracketStr}
