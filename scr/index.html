@@ -3063,40 +3063,83 @@ function computeAdjustedTotals(docs, clientProfile, selectedFY, adjustments) {
 }
 
 // Send instruction to Claude, get back a structured delta + human summary
+// Build a flat list of all deduction line items from extracted docs
+function buildDeductionLineItems(docs, currentTotals) {
+  const lines = [];
+  const done = (docs || []).filter(function(d){ return d.status==="done" && d.extracted && !d.extracted.error; });
+  done.forEach(function(d) {
+    const ex = d.extracted;
+    // D-coded fields from field grid
+    (ex.fields || []).forEach(function(f) {
+      if (f.ato_code && /^D/i.test(f.ato_code) && parseVal(f.value) > 0) {
+        lines.push({ code: f.ato_code, label: f.label, amount: parseVal(f.value), source: d.file.name });
+      }
+    });
+    // Income protection premium as D15
+    if (parseVal(ex.incProtectionPremium) > 0) {
+      lines.push({ code:"D15", label:"Income protection insurance premium", amount: parseVal(ex.incProtectionPremium), source: d.file.name });
+    }
+  });
+  // If no coded lines found but we have a deductions total, add a generic entry
+  if (!lines.length && currentTotals.deductions > 0) {
+    lines.push({ code:"D5", label:"Work-related expenses (total)", amount: currentTotals.deductions, source:"extracted" });
+  }
+  return lines;
+}
+
 async function interpretAdjustment(apiKey, instruction, currentTotals, docs, selectedFY) {
   const fy = getFYLabel(selectedFY);
-  const system = `You are an Australian tax return adjustment assistant. The accountant will give you a natural language instruction to change a figure in the ITR. You must:
-1. Identify which field(s) to change from: deductions, ipPremium, paygIncome, rentalIncome, rentalExp, capitalGains
-2. Calculate the new value based on the instruction and current figures
-3. Return ONLY a JSON object — no markdown, no explanation outside JSON.
+  const lineItems = buildDeductionLineItems(docs, currentTotals);
+  const lineItemsText = lineItems.length
+    ? lineItems.map(function(l,i){ return (i+1)+". "+l.code+" \""+l.label+"\" $"+l.amount.toFixed(2)+" ("+l.source+")"; }).join("\n")
+    : "No individual deduction lines extracted — only total available: $"+currentTotals.deductions.toFixed(2);
 
-Current figures (all AUD):
-- deductions (work-related): ${currentTotals.deductions.toFixed(2)}
+  const system = `You are an intelligent Australian tax return adjustment assistant. The accountant gives you a plain-English instruction to adjust the ITR. You have access to the full list of extracted deduction line items.
+
+EXTRACTED DEDUCTION LINE ITEMS:
+${lineItemsText}
+
+CURRENT ITR TOTALS (AUD):
+- deductions (total work-related, sum of D1-D14 above): ${currentTotals.deductions.toFixed(2)}
 - ipPremium (income protection D15): ${(currentTotals.ipPremium||0).toFixed(2)}
 - paygIncome (salary Item 1): ${currentTotals.paygIncome.toFixed(2)}
 - rentalIncome: ${currentTotals.rentalIncome.toFixed(2)}
 - rentalExp: ${currentTotals.rentalExp.toFixed(2)}
 - capitalGains: ${currentTotals.capitalGains.toFixed(2)}
 
-Return format:
-{"delta":{"fieldName":newValue},"summary":"Human-readable description of what changed, e.g. Mobile phone allowance reduced from 100% to 70% — deductions reduced by $X"}
+YOUR JOB:
+1. Match the instruction to specific line item(s) using fuzzy/semantic matching — e.g. "mobile" matches "Mobile phone expenses", "car" matches "Motor vehicle expenses", "WFH" matches "Working from home"
+2. Calculate the new deduction TOTAL after the change
+3. Return ONLY valid JSON — no markdown, no preamble
 
-Rules:
-- delta must contain ONLY the field(s) that change, with their new absolute values
-- If instruction references a percentage change on a deduction item, calculate the new deduction total accordingly
-- If instruction says remove a deduction, subtract that amount from deductions total
-- If instruction adds a deduction, add it to deductions total
-- summary must state old value → new value clearly
-- If you cannot interpret the instruction, return {"delta":{},"summary":"Could not interpret: please rephrase"}`;
+RESPONSE FORMATS — choose one:
+
+A) If you can confidently match and calculate:
+{"delta":{"deductions":newTotalValue},"lineItem":{"code":"D3","label":"Mobile phone expenses","oldAmount":420,"newAmount":294,"change":-126},"summary":"Mobile phone expenses reduced from 100% to 70%: $420 → $294. Total deductions: $X → $Y"}
+
+B) If the instruction is ambiguous and multiple line items could match, return candidates for the accountant to choose from:
+{"candidates":[{"code":"D3","label":"Mobile phone expenses","amount":420},{"code":"D5","label":"Other work expenses","amount":150}],"summary":"Multiple items could match — please select one"}
+
+C) If you need to add a NEW deduction not in the list:
+{"delta":{"deductions":newTotalValue},"lineItem":{"code":"D5","label":"Description of new item","oldAmount":0,"newAmount":amount,"change":amount},"summary":"Added X: $amount. Total deductions: $X → $Y"}
+
+RULES:
+- delta.deductions must be the NEW TOTAL of all deductions after the change (not just the changed amount)
+- For percentage changes: newAmount = oldAmount * percentage. E.g. 70% of $420 = $294
+- For removals: subtract the item's amount from the deductions total
+- For additions: add the new amount to the deductions total  
+- summary must clearly state: item name, old amount, new amount, and new total deductions
+- Be decisive — only return candidates if genuinely ambiguous (2+ equally plausible matches)`;
 
   const raw = await callClaude(apiKey, {
     system,
-    messages: [{ role:"user", content: "FY" + fy + " adjustment instruction: " + instruction }],
-    maxTokens: 400,
+    messages: [{ role:"user", content: "FY"+fy+" adjustment: "+instruction }],
+    maxTokens: 500,
   });
   try {
-    const clean = raw.replace(/\`\`\`json|\`\`\`/g,"").trim();
-    return JSON.parse(clean);
+    const clean = raw.replace(/```json|```/g,"").trim();
+    const start = clean.indexOf("{");
+    return JSON.parse(start > -1 ? clean.slice(start) : clean);
   } catch(e) {
     return { delta:{}, summary:"Parse error — please rephrase the instruction." };
   }
@@ -3108,6 +3151,8 @@ Rules:
 function AdjustmentsPanel({ state, dispatch, outputsState }) {
   const { apiKey, adjustments, docs, clientProfile, selectedFY } = state;
   const [input, setInput] = useState("");
+  const [pendingInstruction, setPendingInstruction] = useState("");
+  const [candidates, setCandidates] = useState(null); // [{code, label, amount}] when ambiguous
   const [loading, setLoading] = useState(false);
   const [regenLoading, setRegenLoading] = useState(false);
   const inputRef = useRef(null);
@@ -3115,14 +3160,62 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
   const baseTotals = computeTotals(docs, clientProfile, selectedFY);
   const adjTotals  = computeAdjustedTotals(docs, clientProfile, selectedFY, adjustments);
 
-  const CHIPS = [
-    "Reduce mobile phone claim to 70% and recalculate",
-    "Remove car expense deduction and recalculate",
-    "Add self-education expense of $500",
-    "Reduce WFH deduction to 60% claimable",
-    "Remove the uniform/laundry deduction",
-    "Change internet claim to 50%",
-  ];
+  // Derive quick chips dynamically from actual extracted deduction line items
+  const lineItems = buildDeductionLineItems(docs, baseTotals);
+  const CHIPS = lineItems.length > 0
+    ? lineItems.slice(0,6).map(function(l){
+        return "Reduce " + l.label + " to 70%";
+      })
+    : [
+        "Reduce mobile phone claim to 70%",
+        "Remove car expense deduction",
+        "Add self-education expense of $500",
+        "Reduce WFH deduction to 60% claimable",
+        "Remove the uniform/laundry deduction",
+        "Change internet claim to 50%",
+      ];
+
+  function commitAdjustment(result, instr) {
+    const before = {};
+    const after = {};
+    Object.keys(result.delta).forEach(function(k) {
+      before[k] = adjTotals[k] !== undefined ? adjTotals[k] : 0;
+      after[k]  = result.delta[k];
+    });
+    dispatch({
+      type: "ADD_ADJUSTMENT",
+      payload: {
+        id: Date.now().toString(),
+        instruction: instr,
+        summary: result.summary,
+        delta: result.delta,
+        lineItem: result.lineItem || null,
+        before,
+        after,
+        timestamp: new Date().toLocaleTimeString("en-AU"),
+      }
+    });
+    regenReviewOutputs(result.delta, result.summary);
+  }
+
+  // Called when accountant picks from the candidates list
+  async function handleCandidatePick(candidate) {
+    setCandidates(null);
+    const refinedInstruction = pendingInstruction + " — specifically the item: " + candidate.label + " ($" + candidate.amount.toFixed(2) + ")";
+    setLoading(true);
+    try {
+      const result = await interpretAdjustment(apiKey, refinedInstruction, adjTotals, docs, selectedFY);
+      if (result.delta && Object.keys(result.delta).length > 0) {
+        commitAdjustment(result, pendingInstruction + " [" + candidate.label + "]");
+      } else {
+        alert(result.summary || "Could not apply — please rephrase.");
+      }
+    } catch(e) {
+      alert("Error: " + e.message);
+    }
+    setLoading(false);
+    setPendingInstruction("");
+  }
 
   async function handleApply() {
     if (!apiKey) { alert("Please enter your Anthropic API key."); return; }
@@ -3130,32 +3223,17 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
     if (!instr) return;
     setInput("");
     setLoading(true);
+    setCandidates(null);
     try {
       const result = await interpretAdjustment(apiKey, instr, adjTotals, docs, selectedFY);
-      if (result.delta && Object.keys(result.delta).length > 0) {
-        // Compute before/after for the log
-        const before = {};
-        const after = {};
-        Object.keys(result.delta).forEach(function(k) {
-          before[k] = adjTotals[k] !== undefined ? adjTotals[k] : 0;
-          after[k]  = result.delta[k];
-        });
-        dispatch({
-          type: "ADD_ADJUSTMENT",
-          payload: {
-            id: Date.now().toString(),
-            instruction: instr,
-            summary: result.summary,
-            delta: result.delta,
-            before,
-            after,
-            timestamp: new Date().toLocaleTimeString("en-AU"),
-          }
-        });
-        // Auto-regenerate XLSX and Review & Risk
-        await regenReviewOutputs(result.delta, result.summary);
+      if (result.candidates && result.candidates.length > 0) {
+        // Ambiguous — show picker
+        setPendingInstruction(instr);
+        setCandidates(result.candidates);
+      } else if (result.delta && Object.keys(result.delta).length > 0) {
+        commitAdjustment(result, instr);
       } else {
-        alert(result.summary || "Could not interpret instruction — please rephrase.");
+        alert(result.summary || "Could not interpret — please rephrase.");
       }
     } catch(e) {
       alert("Error: " + e.message);
@@ -3246,41 +3324,91 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
         {adjustments.length>0 && <button className="tbtn" style={{fontSize:10}} onClick={function(){ dispatch({type:"CLEAR_ADJUSTMENTS"}); }}>Reset all</button>}
       </div>
 
+      {/* ── Candidate picker — shown when Claude finds ambiguous matches ── */}
+      {candidates && (
+        <div style={{marginBottom:14,padding:"12px 14px",background:"var(--warn-l)",border:"1px solid var(--warn)",borderRadius:"var(--rs)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--warn-t)",marginBottom:8}}>
+            ⚠ Multiple deduction items could match — which one did you mean?
+          </div>
+          <div style={{fontSize:11,color:"var(--muted)",marginBottom:10,fontStyle:"italic"}}>Instruction: "{pendingInstruction}"</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {candidates.map(function(c,i){return (
+              <button key={i} onClick={function(){ handleCandidatePick(c); }}
+                style={{display:"flex",alignItems:"center",gap:12,padding:"8px 12px",background:"var(--surface)",
+                  border:"0.5px solid var(--border-strong)",borderRadius:"var(--rs)",cursor:"pointer",textAlign:"left",fontSize:12}}
+                onMouseEnter={function(e){e.currentTarget.style.background="var(--accent-l)";e.currentTarget.style.borderColor="var(--accent)";}}
+                onMouseLeave={function(e){e.currentTarget.style.background="var(--surface)";e.currentTarget.style.borderColor="var(--border-strong)";}}>
+                <span style={{fontFamily:"Courier New",fontSize:10,color:"var(--accent)",fontWeight:700,minWidth:30}}>{c.code}</span>
+                <span style={{flex:1,fontWeight:500}}>{c.label}</span>
+                <span style={{fontFamily:"Courier New",fontWeight:600,color:"var(--muted)"}}>{fmtAUD(c.amount)}</span>
+                <span style={{fontSize:11,color:"var(--accent)"}}>Select →</span>
+              </button>
+            );})}
+          </div>
+          <button className="tbtn" style={{marginTop:8,fontSize:11}} onClick={function(){setCandidates(null);setPendingInstruction("");}}>Cancel</button>
+        </div>
+      )}
+
       {/* ── Change log ── */}
       {adjustments.length > 0 && (
         <div style={{marginBottom:14}}>
           <div style={{fontSize:10,fontFamily:"Courier New",color:"var(--muted)",fontWeight:700,letterSpacing:".6px",textTransform:"uppercase",marginBottom:6}}>Change log</div>
           {adjustments.map(function(adj, i) {
+            const li = adj.lineItem;
             return (
-              <div key={adj.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 10px",background:i%2===0?"var(--surface)":"var(--surface2)",border:"0.5px solid var(--border)",borderRadius:"var(--rs)",marginBottom:4,fontSize:12}}>
+              <div key={adj.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 12px",background:i%2===0?"var(--surface)":"var(--surface2)",border:"0.5px solid var(--border)",borderRadius:"var(--rs)",marginBottom:4,fontSize:12}}>
                 <span style={{fontFamily:"Courier New",fontSize:10,color:"var(--hint)",flexShrink:0,marginTop:2}}>{String(i+1).padStart(2,"0")}</span>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:500,marginBottom:2}}>{adj.instruction}</div>
-                  <div style={{fontSize:11,color:"var(--accent)",fontFamily:"Courier New"}}>{adj.summary}</div>
-                  {adj.before && (
-                    <div style={{fontSize:10,color:"var(--hint)",marginTop:2,display:"flex",gap:10,flexWrap:"wrap"}}>
-                      {Object.keys(adj.before).map(function(k){
-                        return <span key={k}>{k}: <span style={{textDecoration:"line-through"}}>{fmtAUD(adj.before[k])}</span> → <strong>{fmtAUD(adj.after[k])}</strong></span>;
-                      })}
+                  <div style={{fontWeight:500,marginBottom:3}}>{adj.instruction}</div>
+                  {li && (
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,padding:"4px 8px",background:"var(--surface3)",borderRadius:"var(--rs)",fontSize:11}}>
+                      <span style={{fontFamily:"Courier New",color:"var(--accent)",fontWeight:700,fontSize:10}}>{li.code}</span>
+                      <span style={{flex:1,color:"var(--muted)"}}>{li.label}</span>
+                      <span style={{textDecoration:"line-through",color:"var(--hint)"}}>{fmtAUD(li.oldAmount)}</span>
+                      <span style={{color:"var(--muted)"}}>→</span>
+                      <span style={{fontWeight:600,color:li.change<0?"var(--accent)":"var(--danger)"}}>{fmtAUD(li.newAmount)}</span>
+                      <span style={{fontSize:10,color:li.change<0?"var(--accent)":"var(--danger)"}}>{li.change<0?"-":"+"}{ fmtAUD(Math.abs(li.change))}</span>
                     </div>
                   )}
+                  <div style={{fontSize:11,color:"var(--accent-t)",fontFamily:"Courier New"}}>{adj.summary}</div>
                 </div>
-                <span style={{fontSize:10,fontFamily:"Courier New",color:"var(--hint)",flexShrink:0}}>{adj.timestamp}</span>
-                <button className="tbtn" style={{fontSize:10,padding:"2px 8px",flexShrink:0}} onClick={function(){ handleRevert(adj.id); }}>↩ Revert</button>
+                <span style={{fontSize:10,fontFamily:"Courier New",color:"var(--hint)",flexShrink:0,marginTop:2}}>{adj.timestamp}</span>
+                <button className="tbtn" style={{fontSize:10,padding:"2px 8px",flexShrink:0,marginTop:1}} onClick={function(){ handleRevert(adj.id); }}>↩ Revert</button>
               </div>
             );
           })}
         </div>
       )}
 
-      {adjustments.length === 0 && (
+      {adjustments.length === 0 && !candidates && (
         <div style={{marginBottom:12}}>
-          <div className="notice info"><span>ℹ</span><span>No adjustments applied. Original extracted figures are in use. Type an instruction below to make changes.</span></div>
+          <div className="notice info"><span>ℹ</span><span>No adjustments applied. Original extracted figures are in use. Use the quick actions below or type an instruction.</span></div>
+        </div>
+      )}
+
+      {/* ── Extracted deduction items reference ── */}
+      {buildDeductionLineItems(docs, baseTotals).length > 0 && !candidates && (
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:10,fontFamily:"Courier New",color:"var(--muted)",fontWeight:700,letterSpacing:".6px",textTransform:"uppercase",marginBottom:6}}>Extracted deduction items</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+            {buildDeductionLineItems(docs, baseTotals).map(function(l,i){return (
+              <button key={i}
+                onClick={function(){ setInput("Reduce " + l.label + " to 70%"); inputRef.current && inputRef.current.focus(); }}
+                style={{fontSize:11,padding:"4px 10px",background:"var(--surface2)",border:"0.5px solid var(--border-strong)",
+                  borderRadius:20,cursor:"pointer",display:"flex",gap:6,alignItems:"center",color:"var(--muted)"}}
+                onMouseEnter={function(e){e.currentTarget.style.background="var(--accent-l)";e.currentTarget.style.color="var(--accent-t)";}}
+                onMouseLeave={function(e){e.currentTarget.style.background="var(--surface2)";e.currentTarget.style.color="var(--muted)";}}>
+                <span style={{fontFamily:"Courier New",fontSize:9,color:"var(--accent)",fontWeight:700}}>{l.code}</span>
+                <span>{l.label}</span>
+                <span style={{fontFamily:"Courier New",fontWeight:600}}>{fmtAUD(l.amount)}</span>
+              </button>
+            );})}
+          </div>
         </div>
       )}
 
       {/* ── Quick chips ── */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
+      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
         {CHIPS.map(function(c,i){return (
           <button key={i} className="op-review-chip" onClick={function(){ setInput(c); inputRef.current && inputRef.current.focus(); }}>{c}</button>
         );})}
@@ -3289,19 +3417,19 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
       {/* ── Input ── */}
       <div style={{display:"flex",gap:6,alignItems:"flex-end"}}>
         <textarea ref={inputRef} className="chat-input" rows={2}
-          placeholder="e.g. Change mobile phone allowance from 100% to 70% and recalculate"
+          placeholder="e.g. Reduce mobile phone to 70%, remove car expense, add self-education $450…"
           value={input}
           onChange={function(e){ setInput(e.target.value); }}
           onKeyDown={function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); handleApply(); } }}
           style={{flex:1,resize:"none"}}
         />
-        <button className="tbtn primary" onClick={handleApply} disabled={loading||!input.trim()}
+        <button className="tbtn primary" onClick={handleApply} disabled={loading||!input.trim()||!!candidates}
           style={{padding:"8px 14px",alignSelf:"stretch"}}>
           {loading ? <><Spinner/>Applying...</> : "Apply →"}
         </button>
       </div>
       <div style={{fontSize:10,color:"var(--hint)",marginTop:4}}>
-        Review &amp; Risk panel updates automatically after each change. XLSX recalculates instantly. Letter, Xero, ATO form unchanged until final save.
+        Review &amp; Risk and XLSX update automatically. Letter, Xero &amp; ATO Form update on final Save to SharePoint.
       </div>
     </div>
   );
