@@ -2302,7 +2302,7 @@ function TaxReturnRenderer({ content }) {
   const incomeRaw   = parseSection(text, "INCOME");
   const deductRaw   = parseSection(text, "DEDUCTIONS");
   const summaryRaw  = parseSection(text, "SUMMARY");
-  const notesRaw    = parseSection(text, "NOTES");
+  const reviewRaw   = parseSection(text, "REVIEW");
 
   // If no structured sections found, fall back to plain text
   if (!incomeRaw && !summaryRaw) {
@@ -2334,7 +2334,7 @@ function TaxReturnRenderer({ content }) {
     lines.push("");
     lines.push("SUMMARY");
     summaryRows.forEach(r => lines.push(r.join("\t")));
-    if (notesRaw) { lines.push(""); lines.push("NOTES"); lines.push(notesRaw); }
+    if (reviewRaw) { lines.push(""); lines.push("REVIEW & RISK"); lines.push(reviewRaw); }
     navigator.clipboard.writeText(lines.join("\n")).then(() => alert("Copied to clipboard — paste into Excel or Google Sheets"));
   };
 
@@ -2408,23 +2408,27 @@ function TaxReturnRenderer({ content }) {
         </tbody>
       </table>
 
-      {/* NOTES */}
-      {notesRaw && (
+      {/* REVIEW & RISK */}
+      {reviewRaw && (
         <>
-          <div style={secHdr}>Notes &amp; Considerations</div>
+          <div style={secHdr}>Review &amp; Risk</div>
           <ul style={{ margin:0, padding:"6px 0 6px 0", listStyle:"none" }}>
             {(() => {
-              // Split on newlines first, then break any remaining long single-line notes on sentence boundaries
-              const lines = notesRaw.split("\n").filter(l => l.trim());
-              const bullets = lines.length > 1
-                ? lines
-                : notesRaw.replace(/\.\s+(?=[A-Z])/g, ".\n").split("\n").filter(l => l.trim());
-              return bullets.map((note, i) => (
-                <li key={i} style={{ display:"flex", gap:8, padding:"5px 0", fontSize:12, lineHeight:1.7, color:"var(--muted)", borderBottom:"0.5px solid var(--border)" }}>
-                  <span style={{ color:"var(--warn)", flexShrink:0, fontSize:11, marginTop:3 }}>⚑</span>
-                  <span>{note.replace(/^[-•*⚑►▸·]\s*/, "").trim()}</span>
-                </li>
-              ));
+              const lines = reviewRaw.split("\n").filter(l => l.trim());
+              return lines.map((note, i) => {
+                const isFlag = /^\[FLAG\]/i.test(note);
+                const isWarn = /^\[WARN\]/i.test(note);
+                const isInfo = /^\[INFO\]/i.test(note);
+                const icon   = isFlag ? "⛔" : isWarn ? "⚠" : "ℹ";
+                const color  = isFlag ? "var(--danger)" : isWarn ? "var(--warn)" : "var(--info)";
+                const clean  = note.replace(/^\[(FLAG|WARN|INFO)\]\s*/i, "").replace(/^[-•*⚑►▸·]\s*/, "").trim();
+                return (
+                  <li key={i} style={{ display:"flex", gap:8, padding:"6px 0", fontSize:12, lineHeight:1.6, borderBottom:"0.5px solid var(--border)" }}>
+                    <span style={{ color, flexShrink:0, fontSize:13, marginTop:1 }}>{icon}</span>
+                    <span style={{ color: isFlag ? "var(--danger)" : isWarn ? "var(--warn-t)" : "var(--muted)" }}>{clean}</span>
+                  </li>
+                );
+              });
             })()}
           </ul>
         </>
@@ -2505,7 +2509,7 @@ ESS TREATMENT:
 - SALE rows (soldWithin30Days): taxing point = sale date, assessable = sale proceeds minus costs.
 - VEST rows (held shares): assessable = market value at vesting. Cost base for future CGT = this assessed amount.
 - Box D→apply $1,000 concession per employer (s.83A-35). Box C→offsets tax payable.
-- Flag in ##NOTES: number of held shares, their cost bases, and CGT implications on future disposal.
+- Flag in ##REVIEW: number of held shares, their cost bases, and CGT implications on future disposal.
 RULES:
 - Exclude docs marked NO-EXCLUDE from deductions.
 - List each employer as separate Item 1 row.
@@ -2521,8 +2525,8 @@ ITEM|DESCRIPTION|NOTES|AMOUNT
 LABEL|AMOUNT
 Rows:Total income|Total deductions|Taxable income|Gross tax|LITO|LMITO|Medicare levy|PHI clawback|Total withheld|Est. refund / payable
 SIGN RULES: deductions=negative, tax payable=negative, refund=positive, withheld=positive. Est. refund/payable = totalWithheld - netTax. If result is negative it is PAYABLE (output as negative number). If positive it is a REFUND.
-##NOTES
-One note per line.`;
+##REVIEW
+One risk or review item per line. Focus on: ATO audit risk, missing information, deduction legitimacy concerns, ESS complexity, Medicare/PHI issues, out-of-period items, anything the accountant must check before lodging. Use prefix [FLAG], [WARN], or [INFO] on each line.`;
     try {
       const msgs = [...drafterMessages, { role:"user", content:clean }];
       const reply = await callClaude(apiKey, { system, messages:msgs, maxTokens:2000 });
@@ -2558,6 +2562,14 @@ One note per line.`;
         )}
         <div ref={bottomRef} />
       </div>
+      <div className="chat-input-row">
+        <textarea className="chat-input" rows={1} placeholder="Ask anything about this return, or describe an adjustment…"
+          value={input}
+          onChange={e => { setInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,110)+"px"; }}
+          onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
+        />
+        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send →</button>
+      </div>
       <div className="chips-row">
         {DRAFTER_CHIPS.map((c, i) => (
           <span key={i} className={`chip${c.primary ? " primary-chip" : ""}`} onClick={() => send(typeof c.prompt === 'function' ? c.prompt(state.selectedFY) : c.prompt)}>{c.label}</span>
@@ -2574,14 +2586,6 @@ One note per line.`;
           </span>
           </>
         )}
-      </div>
-      <div className="chat-input-row">
-        <textarea className="chat-input" rows={1} placeholder="Ask anything about this return…"
-          value={input}
-          onChange={e => { setInput(e.target.value); e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,110)+"px"; }}
-          onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-        />
-        <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send →</button>
       </div>
     </div>
   );
