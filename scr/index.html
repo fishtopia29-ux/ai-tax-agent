@@ -2721,8 +2721,10 @@ function App() {
   }, []);
 
   const autoDraft = useCallback(() => {
+    const prompt = DRAFTER_CHIPS[0].prompt(state.selectedFY);
+    dispatch({ type:"SET_DRAFTER_AUTO_PROMPT", payload: prompt });
     dispatch({ type:"SET_PANEL", payload:"drafter" });
-  }, [dispatch]);
+  }, [dispatch, state.selectedFY]);
 
   const onExport = useCallback(() => {
     const fyTag2 = state.selectedFY.replace("-","");
@@ -2750,11 +2752,6 @@ function App() {
               ))}
             </select>
             <button className="tbtn" onClick={() => dispatch({ type:"SHOW_ARCHIVE_MODAL" })}>+ New client</button>
-            {state.panel === "vault" && (
-              <button className="tbtn primary" onClick={autoDraft} disabled={!state.docs.some(d => d.status === "done")}>
-                ✦ Draft tax return
-              </button>
-            )}
           </div>
           {/* Provisional rates banner */}
           {(() => {
