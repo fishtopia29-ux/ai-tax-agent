@@ -1088,7 +1088,7 @@ function Sidebar({ state, dispatch, onExport }) {
           { key:"xero",    label:"Xero JSON - ATO lodgement" },
           { key:"form",    label:"ATO completed template" },
           { key:"xlsx",    label:"Calculations spreadsheet" },
-          { key:"review",  label:"Review & Risk" },
+          { key:"review",  label:"Flags & Risk" },
           { key:"adjust",  label:"Adjustments" },
         ].map(item => {
           const st = state.outputsState[item.key] || "idle";
@@ -1928,7 +1928,7 @@ function SharePointSaver({ state, outputsState, onClose }) {
         <div style={{ padding:"8px 16px", background:"var(--accent-l)", borderBottom:"0.5px solid var(--accent)", fontSize:11, display:"flex", gap:20, flexShrink:0 }}>
           <span><span style={{ color:"var(--muted)" }}>Client ref:</span> <strong>{clientRef}</strong></span>
           <span><span style={{ color:"var(--muted)" }}>FY:</span> <strong>{getFYLabel(fy)}</strong></span>
-          <span><span style={{ color:"var(--muted)" }}>Artefacts:</span> <strong>6 files</strong> (letter, Xero JSON, ATO form, XLSX, exceptions CSV, deduction CSV)</span>
+          <span><span style={{ color:"var(--muted)" }}>Artefacts:</span> <strong>5 files</strong> (letter, Xero JSON, ATO form, XLSX, flags &amp; risk CSV)</span>
         </div>
 
         {/* ── Breadcrumb ── */}
@@ -2334,7 +2334,7 @@ function TaxReturnRenderer({ content }) {
     lines.push("");
     lines.push("SUMMARY");
     summaryRows.forEach(r => lines.push(r.join("\t")));
-    if (reviewRaw) { lines.push(""); lines.push("REVIEW & RISK"); lines.push(reviewRaw); }
+    if (reviewRaw) { lines.push(""); lines.push("FLAGS & RISK"); lines.push(reviewRaw); }
     navigator.clipboard.writeText(lines.join("\n")).then(() => alert("Copied to clipboard — paste into Excel or Google Sheets"));
   };
 
@@ -2408,10 +2408,10 @@ function TaxReturnRenderer({ content }) {
         </tbody>
       </table>
 
-      {/* REVIEW & RISK */}
+      {/* FLAGS & RISK */}
       {reviewRaw && (
         <>
-          <div style={secHdr}>Review &amp; Risk</div>
+          <div style={secHdr}>Flags &amp; Risk</div>
           <ul style={{ margin:0, padding:"6px 0 6px 0", listStyle:"none" }}>
             {(() => {
               const raw = reviewRaw.split("\n").filter(l => l.trim());
@@ -2579,20 +2579,14 @@ One risk or review item per line. Focus on: ATO audit risk, missing information,
         <button className="tbtn primary" onClick={() => send(input)} disabled={loading}>Send →</button>
       </div>
       <div className="chips-row">
-        {DRAFTER_CHIPS.map((c, i) => (
-          <span key={i} className={`chip${c.primary ? " primary-chip" : ""}`} onClick={() => send(typeof c.prompt === 'function' ? c.prompt(state.selectedFY) : c.prompt)}>{c.label}</span>
+        {DRAFTER_CHIPS.filter(c => !c.primary).map((c, i) => (
+          <span key={i} className="chip" onClick={() => send(typeof c.prompt === 'function' ? c.prompt(state.selectedFY) : c.prompt)}>{c.label}</span>
         ))}
         {drafterMessages.some(m => m.role === "assistant") && (
-          <>
-          <span className="chip" style={{ background:"#1a3a5c", color:"#fff", borderColor:"#1a3a5c" }}
-            onClick={() => generateClientLetter(state)}>
-            📄 Generate client letter
-          </span>
-          <span className="chip" style={{ background:"#2d7a3a", color:"#fff", borderColor:"#2d7a3a" }}
+          <span className="chip" style={{ background:"#2d7a3a", color:"#fff", borderColor:"#2d7a3a", fontWeight:600, fontSize:12, padding:"6px 16px" }}
             onClick={() => triggerOutputGeneration(state, dispatch)}>
-            ⚡ Generate all 6 outputs
+            ✦ Finalise Return &amp; Customer Letter
           </span>
-          </>
         )}
       </div>
     </div>
@@ -2994,8 +2988,18 @@ function inferEmployerContext(docs) {
 async function generateExceptions(apiKey, state, wpData) {
   const t = wpData.totals;
   const fy = getFYLabel(state.selectedFY);
-  const system = "You are an Australian tax review specialist. Analyse the return and identify exceptions, risks, and areas of interest. Return ONLY a JSON array, no markdown. Each item: {\"type\":\"warn|info|flag\",\"category\":\"string\",\"msg\":\"string\",\"ref\":\"ATO item/section\",\"action\":\"string\"}. flag=must fix before lodging. warn=review recommended. info=note. Max 10 items.";
-  const prompt = "FY"+fy+" ITR review:\nTaxable income: "+fmtAUD(t.taxableIncome)+" | Deductions: "+fmtAUD(t.deductions+(t.ipPremium||0))+" | "+(t.refund>=0?"Refund":"Payable")+": "+fmtAUD(Math.abs(t.refund))+"\nESS: "+fmtAUD(t.essBoxF+t.essBoxD+t.essBoxE)+" | Rental net: "+fmtAUD(t.rentalIncome-t.rentalExp)+" | Medicare: "+fmtAUD(t.medicare)+"\nInterview risks: "+((state.interviewRisks||[]).join("; ")||"none recorded")+"\nDocs: "+buildVaultContext(state.docs, state.chatMessages, state.selectedFY).slice(0,1000);
+  // Build deduction line items context for the combined flags & risk call
+  const deductLines = buildDeductionLineItems(state.docs||[], t);
+  const deductCtxForExc = deductLines.length
+    ? "\nDEDUCTION LINE ITEMS:\n" + deductLines.map(function(l,i){ return (i+1)+". "+l.code+" \""+l.label+"\" $"+l.amount.toFixed(2); }).join("\n")
+    : "";
+  const employers = inferEmployerContext(state.docs||[]);
+  const employerStr = employers
+    ? employers.map(function(e){ return e.name+(e.abn?" (ABN: "+e.abn+")":""); }).join(", ")
+    : "not extracted";
+  const occupation = (state.clientProfile||{}).occupation || "not stated";
+  const system = "You are an Australian tax review specialist and deduction compliance reviewer. Analyse the return and return ONLY a JSON array, no markdown. Each item: {\"type\":\"warn|info|flag\",\"category\":\"string\",\"msg\":\"string\",\"ref\":\"ATO item/section\",\"action\":\"string\"}. flag=must fix before lodging. warn=review recommended. info=note. Max 12 items total. Cover TWO areas: (1) Return-level risks: refund/payable anomalies, Medicare/PHI, ESS complexity, PAYG variation, out-of-period docs, missing info, ATO audit triggers. (2) Deduction legitimacy: for each deduction line item, assess whether it is claimable for the taxpayer\'s occupation and employer — flag anything that looks inconsistent, unsupported, or high-risk. Use s.8-1 ITAA 1997 and ATO occupation-specific guidance.";
+  const prompt = "FY"+fy+" ITR review:\nTaxable income: "+fmtAUD(t.taxableIncome)+" | Deductions: "+fmtAUD(t.deductions+(t.ipPremium||0))+" | "+(t.refund>=0?"Refund":"Payable")+": "+fmtAUD(Math.abs(t.refund))+"\nESS: "+fmtAUD(t.essBoxF+t.essBoxD+t.essBoxE)+" | Rental net: "+fmtAUD(t.rentalIncome-t.rentalExp)+" | Medicare: "+fmtAUD(t.medicare)+"\nEmployer (STP/PAYG): "+employerStr+"\nOccupation: "+occupation+"\nInterview risks: "+((state.interviewRisks||[]).join("; ")||"none recorded")+deductCtxForExc+"\nDocs: "+buildVaultContext(state.docs, state.chatMessages, state.selectedFY).slice(0,800);
   const raw = await callClaude(apiKey, { system, messages:[{role:"user",content:prompt}], maxTokens:700 });
   try { return JSON.parse(raw.replace(/```json|```/g,"").trim()); }
   catch(e) { return [{type:"info",category:"Parse",msg:"Exceptions could not be parsed - review manually.",ref:"",action:"Manual review"}]; }
@@ -3265,14 +3269,9 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
     };
     dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData: wp, xlsx:"done", review:"loading" }});
     try {
-      const [excRes, deductRes] = await Promise.allSettled([
-        generateExceptions(apiKey, { ...state, adjustments: allAdj }, wp),
-        checkDeductionLegitimacy(apiKey, { ...state, adjustments: allAdj }, wp),
-      ]);
-      const aiExc  = excRes.status==="fulfilled"  ? excRes.value  : [];
-      const allExc = mergeExceptions(wp.flags, aiExc);
-      const deductData = deductRes.status==="fulfilled" ? deductRes.value : [];
-      dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData, wpData:wp }});
+      const excResult = await generateExceptions(apiKey, { ...state, adjustments: allAdj }, wp);
+      const allExc = mergeExceptions(wp.flags, excResult);
+      dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData:[], wpData:wp }});
     } catch(e) {
       dispatch({ type:"SET_OUTPUTS_STATE", payload:{ review:"error" }});
     }
@@ -3290,15 +3289,11 @@ function AdjustmentsPanel({ state, dispatch, outputsState }) {
     };
     dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData: wp, xlsx:"done", review:"loading" }});
     try {
-      const [excRes, deductRes] = await Promise.allSettled([
-        generateExceptions(apiKey, { ...state, adjustments: remaining }, wp),
-        checkDeductionLegitimacy(apiKey, { ...state, adjustments: remaining }, wp),
-      ]);
-      const aiExc = excRes.status==="fulfilled" ? excRes.value : [];
+      const excResult2 = await generateExceptions(apiKey, { ...state, adjustments: remaining }, wp);
       dispatch({ type:"SET_OUTPUTS_STATE", payload:{
-        exceptions: mergeExceptions(wp.flags, aiExc),
+        exceptions: mergeExceptions(wp.flags, excResult2),
         review:"done",
-        deductData: deductRes.status==="fulfilled" ? deductRes.value : [],
+        deductData: [],
         wpData: wp,
       }});
     } catch(e) {
@@ -3461,19 +3456,17 @@ async function triggerOutputGeneration(state, dispatch) {
   if (!state.apiKey) { alert("Please enter your Anthropic API key."); return; }
   const hasDocs = state.docs.some(function(d){return d.status==="done"&&d.extracted&&!d.extracted.error;});
   if (!hasDocs) { alert("No extracted documents - complete Step 2 first."); return; }
+  // Navigate straight to Step 4 so accountant watches outputs generate
   dispatch({ type:"SET_PANEL", payload:"output-detail" });
   dispatch({ type:"SET_ACTIVE_OUTPUT", payload:"letter" });
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{
     letter:"loading", xero:"loading", form:"loading", xlsx:"loading", review:"loading",
     exceptions:[], wpData:null, deductData:[], xeroData:null
   }});
-  // Use computeTotals (the native calculation function in this codebase)
   const totals = computeTotals(state.docs, state.clientProfile, state.selectedFY);
   const fy = getFYLabel(state.selectedFY);
-  // Build a workpaper-compatible object from totals
   const wp = {
     totals: { ...totals,
-      deductions: totals.deductions || (totals.paygIncome > 0 ? 0 : 0),
       ipPremium: totals.ipPremium || 0,
       essBoxF: totals.essBoxF || 0,
       essBoxD: totals.essBoxD || 0,
@@ -3488,15 +3481,16 @@ async function triggerOutputGeneration(state, dispatch) {
     sections: [],
     fy,
   };
+  // 1. ATO form (instant — computed totals)
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{ wpData:wp, form:"done" }});
-  // Build simplified Xero JSON from totals
+  // 2. Xero JSON (instant — computed totals)
   const xeroJson = {
     financialYear: state.selectedFY,
     generated: new Date().toISOString(),
     individual: {
       income: {
         salaryWages: totals.paygIncome || 0,
-        essIncome: (totals.essBoxF || 0) + (totals.essBoxD || 0) + (totals.essBoxE || 0),
+        essIncome: (totals.essBoxF||0)+(totals.essBoxD||0)+(totals.essBoxE||0),
         rentalIncome: totals.rentalIncome || 0,
         capitalGains: totals.capitalGains || 0,
       },
@@ -3505,8 +3499,8 @@ async function triggerOutputGeneration(state, dispatch) {
         incomeProtection: totals.ipPremium || 0,
         rentalExpenses: totals.rentalExp || 0,
       },
-      taxOffsets: { lito: totals.lito || 0, lmito: totals.lmito || 0 },
-      medicare: { levy: totals.medicare || 0, phiClawback: totals.phiClawback || 0 },
+      taxOffsets: { lito: totals.lito||0, lmito: totals.lmito||0 },
+      medicare: { levy: totals.medicare||0, phiClawback: totals.phiClawback||0 },
       summary: {
         totalIncome: totals.totalIncome,
         taxableIncome: totals.taxableIncome,
@@ -3518,17 +3512,15 @@ async function triggerOutputGeneration(state, dispatch) {
     }
   };
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{ xeroData:xeroJson, xero:"done" }});
+  // 3. Customer letter (instant — template-based)
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{ letter:"done" }});
+  // 4. Calculations XLSX (instant — SheetJS)
   dispatch({ type:"SET_OUTPUTS_STATE", payload:{ xlsx:"done" }});
+  // 5. Flags & Risk — one combined Claude call (exceptions + deduction legitimacy folded in)
   try {
-    const [excRes, deductRes] = await Promise.allSettled([
-      generateExceptions(state.apiKey, state, wp),
-      checkDeductionLegitimacy(state.apiKey, state, wp),
-    ]);
-    const aiExc = excRes.status==="fulfilled" ? excRes.value : [];
-    const allExc = mergeExceptions(wp.flags, aiExc);
-    const deductData = deductRes.status==="fulfilled" ? deductRes.value : [];
-    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData:deductData }});
+    const excResult = await generateExceptions(state.apiKey, state, wp);
+    const allExc = mergeExceptions(wp.flags, excResult);
+    dispatch({ type:"SET_OUTPUTS_STATE", payload:{ exceptions:allExc, review:"done", deductData:[] }});
   } catch(e) {
     dispatch({ type:"SET_OUTPUTS_STATE", payload:{ review:"error" }});
   }
@@ -3568,7 +3560,7 @@ function OutputDetailPanel({ state, dispatch }) {
     { key:"xero",    label:"Xero JSON - ATO lodgement" },
     { key:"form",    label:"ATO completed template" },
     { key:"xlsx",    label:"Calculations spreadsheet" },
-    { key:"review",  label:"Review & Risk" },
+    { key:"review",  label:"Flags & Risk" },
     { key:"adjust",  label:"Adjustments" },
   ];
   const REVIEW_CHIPS = ["Why is the LITO this amount?","Explain the ESS calculation","What deductions might be missing?","Is the Medicare levy correct?","Explain the refund figure","Which exceptions are most urgent?"];
