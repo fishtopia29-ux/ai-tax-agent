@@ -248,10 +248,32 @@ async function uploadToSharePointFolder(token, driveId, folderId, fileName, file
   return resp.json();
 }
 
-// ─────────────────────────────────────────
-//  FIRM CONFIG — edit these to match your practice
-//  In future this will be loaded from a CRM or firm settings file
-// ─────────────────────────────────────────
+// Create a new folder inside a SharePoint drive folder via Microsoft Graph API
+async function createSharePointFolder(token, driveId, parentFolderId, folderName) {
+  const url = parentFolderId === "root"
+    ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+    : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentFolderId}/children`;
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: folderName,
+      folder: {},
+      "@microsoft.graph.conflictBehavior": "rename",
+    }),
+  });
+  if (!resp.ok) {
+    let errMsg = "Create folder failed: " + resp.status;
+    try { const j = await resp.json(); errMsg = j.error?.message || errMsg; } catch(_) {}
+    throw new Error(errMsg);
+  }
+  return resp.json();
+}
+
+
 const FIRM_CONFIG = {
   name:        "Navigate Financial",
   tagline:     "Financial Advisers",
@@ -1585,6 +1607,9 @@ function SharePointSaver({ state, outputsState, onClose }) {
   const [targetFolder, setTargetFolder] = useState(null);
   const [uploading, setUploading]   = useState(false);
   const [uploadLog, setUploadLog]   = useState([]);
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
 
   const clientRef = outputsState.clientRef || "Client";
   const fy = state.selectedFY || DEFAULT_FY;
@@ -1829,6 +1854,29 @@ function SharePointSaver({ state, outputsState, onClose }) {
     return artefacts;
   }
 
+
+  async function handleCreateFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    setCreatingFolder(true);
+    try {
+      const parentId = breadcrumb[breadcrumb.length - 1].id;
+      const newFolder = await createSharePointFolder(token, driveId, parentId, name);
+      // Navigate into the newly created folder automatically
+      setItems(function(prev){ return [...prev, newFolder]; });
+      setBreadcrumb(function(prev){ return [...prev, { id: newFolder.id, name: newFolder.name }]; });
+      setTargetFolder(newFolder);
+      const children = await listFolder(token, driveId, newFolder.id);
+      setItems(children);
+      setStatus("browsing");
+    } catch(e) {
+      alert("Could not create folder: " + e.message);
+    }
+    setCreatingFolder(false);
+    setShowNewFolder(false);
+    setNewFolderName("");
+  }
+
   async function handleSave() {
     const folderId = targetFolder ? targetFolder.id : breadcrumb[breadcrumb.length - 1].id;
     setUploading(true);
@@ -1922,9 +1970,37 @@ function SharePointSaver({ state, outputsState, onClose }) {
 
           {status === "browsing" && !isDone && (
             <>
-              {folders.length === 0 && (
+              {/* New Folder button + inline input */}
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 16px", borderBottom:"0.5px solid var(--border)", background:"var(--surface2)", flexShrink:0 }}>
+                {!showNewFolder ? (
+                  <button className="tbtn" onClick={function(){ setShowNewFolder(true); setTimeout(function(){ document.getElementById("sp-new-folder-input") && document.getElementById("sp-new-folder-input").focus(); }, 50); }}
+                    style={{ fontSize:11, display:"flex", alignItems:"center", gap:5 }}>
+                    <span>📁+</span> New folder here
+                  </button>
+                ) : (
+                  <>
+                    <span style={{ fontSize:14 }}>📁</span>
+                    <input
+                      id="sp-new-folder-input"
+                      type="text"
+                      placeholder="Folder name (e.g. Smith J - FY2024-25)"
+                      value={newFolderName}
+                      onChange={function(e){ setNewFolderName(e.target.value); }}
+                      onKeyDown={function(e){ if (e.key === "Enter") handleCreateFolder(); if (e.key === "Escape") { setShowNewFolder(false); setNewFolderName(""); } }}
+                      style={{ flex:1, padding:"5px 9px", fontSize:12, border:"0.5px solid var(--accent)", borderRadius:"var(--rs)", background:"var(--surface)", color:"var(--text)", outline:"none", fontFamily:"inherit" }}
+                    />
+                    <button className="tbtn primary" onClick={handleCreateFolder} disabled={!newFolderName.trim() || creatingFolder}
+                      style={{ fontSize:11 }}>
+                      {creatingFolder ? <><Spinner/>Creating...</> : "Create"}
+                    </button>
+                    <button className="tbtn" onClick={function(){ setShowNewFolder(false); setNewFolderName(""); }} style={{ fontSize:11 }}>Cancel</button>
+                  </>
+                )}
+              </div>
+
+              {folders.length === 0 && !showNewFolder && (
                 <div style={{ padding:"14px 16px", color:"var(--muted)", fontSize:12 }}>
-                  No sub-folders here. You can save directly to <strong>{currentFolderName}</strong>.
+                  No sub-folders here. You can save directly to <strong>{currentFolderName}</strong>, or create a new folder above.
                   {fileCount > 0 && <span style={{ color:"var(--hint)", display:"block", marginTop:4 }}>{fileCount} existing file(s) in this folder — artefacts will be added alongside them.</span>}
                 </div>
               )}
@@ -3037,13 +3113,11 @@ function OutputDetailPanel({ state, dispatch }) {
   const [reviewMsgs, setReviewMsgs] = useState([]);
   const [reviewInput, setReviewInput] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [verifyChecks, setVerifyChecks] = useState({ letter:false, xero:false, form:false, xlsx:false, exc:false, deduct:false });
   const [showSPSaver, setShowSPSaver] = useState(false);
   const reviewBottomRef = useRef(null);
   useEffect(function(){ reviewBottomRef.current && reviewBottomRef.current.scrollIntoView({behavior:"smooth"}); }, [reviewMsgs, reviewLoading]);
   const wp = outputsState.wpData;
   const allDone = ["letter","xero","form","xlsx","exc","deduct"].every(function(k){ return outputsState[k]==="done"||outputsState[k]==="error"; });
-  const allVerified = Object.values(verifyChecks).every(Boolean);
   const sendReview = useCallback(async function(text) {
     if (!apiKey || !text.trim()) return;
     const clean = scrubPII(text.trim());
@@ -3246,16 +3320,10 @@ function OutputDetailPanel({ state, dispatch }) {
           {renderOutputContent()}
           {allDone && (
             <div className="op-verify-bar" style={{marginTop:20}}>
-              <span style={{fontSize:12,fontWeight:600}}>Verify:</span>
-              {OUTPUT_DEFS.map(function(c){return (
-                <label key={c.key}>
-                  <input type="checkbox" checked={verifyChecks[c.key]||false} onChange={function(e){setVerifyChecks(function(prev){const n={...prev};n[c.key]=e.target.checked;return n;});}}/>
-                  {c.label.split(" ")[0]}
-                </label>
-              );})}
+              <span style={{fontSize:12,color:"var(--muted)"}}>All 6 outputs ready</span>
               <div style={{flex:1}}/>
-              <button className="tbtn primary" disabled={!allVerified} onClick={function(){ setShowSPSaver(true); }}>
-                ☁️ Approve all → Save to SharePoint
+              <button className="tbtn primary" onClick={function(){ setShowSPSaver(true); }}>
+                ☁️ Save to SharePoint
               </button>
             </div>
           )}
